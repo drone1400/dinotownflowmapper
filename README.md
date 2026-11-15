@@ -2,7 +2,7 @@
 
 Open `DinoTown_Flowmapper.html` in Chrome, Edge or Firefox. It runs offline, nothing to install.
 
-It replaces the Flowmap Generator steps from the glitchvid guide: no Hammer cleanup copy,
+It replaces the Flowmap Generator steps from the [glitchvid guide](https://glitchvid.com/making-flowmaps-for-source/): no Hammer cleanup copy,
 no Crafty, no Blender, no VTFEdit, no image editor.
 
 ## Quick guide
