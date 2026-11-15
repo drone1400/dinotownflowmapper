@@ -11,6 +11,16 @@ at the site root. `README.md` is the user guide.
 - Changes that don't touch the tool (README, CLAUDE.md, hosting/CI files) can go to `master`
   without a version bump.
 
+## Releasing
+
+1. On `develop`: bump `APP_VERSION` in `index.html` and add a README changelog entry.
+2. Merge `develop` into `master` and push `master`. GitHub Pages redeploys by itself.
+3. Tag that `master` commit `v<APP_VERSION>` (e.g. `v3`) and push the tag.
+   `.github/workflows/release.yml` checks that the tag is on `master` and matches
+   `APP_VERSION`, then publishes a GitHub Release with `DinoTown_Flowmapper_v<N>.zip`
+   (the tool renamed to `DinoTown_Flowmapper.html`, plus `README.md` and `LICENSE`).
+4. If `index.html` changed, republish the Claude artifact (below).
+
 ## GitHub Pages
 
 https://drone1400.github.io/dinotownflowmapper/ serves `master` from the repo root (Settings →

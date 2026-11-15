@@ -1,0 +1,42 @@
+name: Release
+
+# Pushing a version tag (v2, v3, ...) on master publishes a GitHub Release with a zip of the
+# tool (index.html renamed to DinoTown_Flowmapper.html), the README and the license.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check the tag is on master and matches APP_VERSION
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/master \
+            || { echo "::error::$GITHUB_REF_NAME is not on master"; exit 1; }
+          ver=$(sed -n 's/^const APP_VERSION = \([0-9]*\);.*/\1/p' index.html)
+          [ "v$ver" = "$GITHUB_REF_NAME" ] \
+            || { echo "::error::Tag $GITHUB_REF_NAME does not match APP_VERSION $ver"; exit 1; }
+
+      - name: Build zip
+        run: |
+          mkdir -p dist/DinoTown_Flowmapper
+          cp index.html dist/DinoTown_Flowmapper/DinoTown_Flowmapper.html
+          cp README.md LICENSE dist/DinoTown_Flowmapper/
+          cd dist && zip -r "DinoTown_Flowmapper_${GITHUB_REF_NAME}.zip" DinoTown_Flowmapper
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME"
+          "dist/DinoTown_Flowmapper_${GITHUB_REF_NAME}.zip"
+          --title "DinoTown Flowmapper $GITHUB_REF_NAME"
+          --generate-notes

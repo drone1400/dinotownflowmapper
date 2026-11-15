@@ -1,6 +1,10 @@
 # DinoTown Flowmapper
 
-Open `index.html` in Chrome, Edge or Firefox. It runs offline, nothing to install.
+Download `DinoTown_Flowmapper_v<N>.zip` from the
+[latest release](https://github.com/drone1400/dinotownflowmapper/releases/latest), unzip it and
+open `DinoTown_Flowmapper.html` in Chrome, Edge or Firefox. It runs offline, nothing to install.
+(In this repo the same file is `index.html`.)
+
 Or use it in the browser without downloading anything: on
 [GitHub Pages](https://drone1400.github.io/dinotownflowmapper/) or as a
 [Claude artifact](https://claude.ai/artifact/RR5HYoB6kA8FT5PMNd6qi1).
