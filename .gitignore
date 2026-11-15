@@ -1,0 +1,21 @@
+# OS
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Editors / tools
+.vscode/
+.idea/
+*.swp
+*~
+.claude/settings.local.json
+
+# Flowmapper exports and test inputs (keep test maps out of the repo)
+*_flowmap_pack.zip
+*.flowscene.json
+*_hammer_and_vmt.txt
+*.vmf
+*.vtf
+*.obj

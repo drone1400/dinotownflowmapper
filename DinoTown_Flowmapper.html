@@ -1,0 +1,2642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>DinoTown Flowmapper</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: instrument panel on the left, survey-map canvas on the right with a Hammer-style tool strip; status bar along the bottom of the map */
+:root {
+  --bg: #e7ecef; --panel: #f6f8f9; --raise: #ffffff; --fg: #15202a; --muted: #586874; --line: #d0d9df; --line-strong: #b4c1ca;
+  --accent: #0a6f80; --accent-ink: #ffffff; --accent-soft: #d5eaee; --stage: #d3dbe0; --focus: #0a6f80;
+  --c-inlet: #0f9e94; --c-outlet: #cf7d14; --c-push: #376fd1; --c-spin: #7f52d8; --c-calm: #64808f; --c-block: #c4452e; --c-open: #2f9446; --c-prop: #a5812f;
+  --ok: #24804a; --warn: #a96b10; --bad: #b5382a;
+  --map-land: #9b8f7c; --map-outside: #c5ccd0; --map-deep: #135a78; --map-shallow: #4fa9c0; --map-block: #c4452e; --map-prop: #a5812f; --map-nofloor: #a88fb5;
+  --f-ui: "Archivo", "Segoe UI", system-ui, sans-serif; --f-mono: "IBM Plex Mono", ui-monospace, Consolas, Menlo, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1317; --panel: #131b20; --raise: #19232a; --fg: #d9e3e9; --muted: #8696a1; --line: #243039; --line-strong: #33424d;
+  --accent: #35b5c6; --accent-ink: #04161a; --accent-soft: #143740; --stage: #090e11; --focus: #35b5c6;
+  --c-inlet: #2cc3b7; --c-outlet: #eb9a33; --c-push: #5b93f0; --c-spin: #a07cf0; --c-calm: #8aa3b2; --c-block: #e3644b; --c-open: #4fbf68; --c-prop: #c9a44f;
+  --ok: #4fbf74; --warn: #e0a44a; --bad: #ec6b5a;
+  --map-land: #4f4a40; --map-outside: #1b2328; --map-deep: #0d4560; --map-shallow: #2f8aa3; --map-block: #b8442f; --map-prop: #9c7f3c; --map-nofloor: #5d4b69;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0d1317; --panel: #131b20; --raise: #19232a; --fg: #d9e3e9; --muted: #8696a1; --line: #243039; --line-strong: #33424d;
+  --accent: #35b5c6; --accent-ink: #04161a; --accent-soft: #143740; --stage: #090e11; --focus: #35b5c6;
+  --c-inlet: #2cc3b7; --c-outlet: #eb9a33; --c-push: #5b93f0; --c-spin: #a07cf0; --c-calm: #8aa3b2; --c-block: #e3644b; --c-open: #4fbf68; --c-prop: #c9a44f;
+  --ok: #4fbf74; --warn: #e0a44a; --bad: #ec6b5a;
+  --map-land: #4f4a40; --map-outside: #1b2328; --map-deep: #0d4560; --map-shallow: #2f8aa3; --map-block: #b8442f; --map-prop: #9c7f3c; --map-nofloor: #5d4b69;
+  color-scheme: dark; }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 13px; line-height: 1.45; }
+* { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.mono, .num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+.app { height: 100%; display: grid; grid-template-rows: auto 1fr; }
+header.top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid var(--line); background: var(--panel); }
+.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; margin-right: auto; }
+.brand h1 { margin: 0; font-size: 17px; font-weight: 800; font-stretch: 122%; letter-spacing: 0.01em; text-wrap: balance; }
+.brand h1 b { color: var(--accent); font-weight: 800; }
+.brand p { margin: 0; color: var(--muted); font-size: 12px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: var(--r); border: 1px solid var(--line-strong); background: var(--raise); cursor: pointer; white-space: nowrap; font-weight: 500; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.btn.small { height: 26px; padding: 0 8px; font-size: 12px; }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn svg { width: 15px; height: 15px; }
+
+main.work { display: grid; grid-template-columns: 372px 1fr; min-height: 0; }
+aside.panel { border-right: 1px solid var(--line); background: var(--panel); overflow-y: auto; min-height: 0; }
+.sec { border-bottom: 1px solid var(--line); }
+.sec > h2 { margin: 0; display: flex; align-items: center; gap: 8px; padding: 10px 16px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); cursor: pointer; user-select: none; }
+.sec > h2 .tag { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 11px; }
+.sec > h2::before { content: ""; width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translate(-2px, -2px); transition: transform .15s; }
+.sec.closed > h2::before { transform: rotate(-45deg); }
+.sec.closed > .body { display: none; }
+.sec > .body { padding: 2px 16px 14px; display: grid; gap: 9px; }
+.row { display: grid; grid-template-columns: 112px 1fr; align-items: center; gap: 8px; min-width: 0; }
+.row > label, .lbl { color: var(--muted); font-size: 12px; }
+.row > .ctl { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.row > .ctl > input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.row > .ctl > output { width: 52px; text-align: right; font-family: var(--f-mono); font-size: 12px; color: var(--fg); }
+.row > .ctl > .unit:empty { width: 30px; }
+input[type=number], input[type=text], select, textarea { height: 28px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--raise); padding: 0 7px; min-width: 0; width: 100%; }
+input[type=number] { font-family: var(--f-mono); font-size: 12px; }
+textarea { height: auto; padding: 6px 7px; font-family: var(--f-mono); font-size: 11.5px; resize: vertical; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+.quad { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width: 100%; }
+.quad label { display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: 6px; color: var(--muted); font-size: 11.5px; }
+.btnrow { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.btnrow .check { margin-left: 4px; }
+.check { display: flex; align-items: flex-start; gap: 7px; cursor: pointer; }
+.check input { margin: 2px 0 0; accent-color: var(--accent); }
+.note { color: var(--muted); font-size: 12px; margin: 0; }
+.note b { color: var(--fg); font-weight: 600; }
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 5px; overflow: hidden; }
+.seg button { border: 0; background: var(--raise); padding: 0 10px; height: 26px; cursor: pointer; font-size: 12px; }
+.seg button + button { border-left: 1px solid var(--line-strong); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.classes { display: grid; gap: 3px; max-height: 150px; overflow-y: auto; padding: 6px 8px; border: 1px solid var(--line); border-radius: 5px; background: var(--raise); }
+.classes .check { font-family: var(--f-mono); font-size: 11.5px; }
+.classes .check span.cnt { margin-left: auto; color: var(--muted); }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 12px; padding: 8px 10px; border-radius: 5px; background: var(--raise); border: 1px solid var(--line); }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.hammer { display: grid; gap: 6px; padding: 10px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent-soft); }
+.hammer .grid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 2px 12px; font-size: 12px; }
+.hammer .grid span:nth-child(3n+1) { color: var(--muted); }
+.hammer .grid .v { font-family: var(--f-mono); font-size: 14px; font-weight: 500; }
+.hammer .grid .h { color: var(--muted); font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; }
+.chip { display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; border-radius: 10px; font-size: 11px; font-weight: 600; border: 1px solid var(--line-strong); color: var(--muted); }
+.chip.ok { color: var(--ok); border-color: currentColor; }
+.chip.warn { color: var(--warn); border-color: currentColor; }
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.objhead { display: flex; align-items: center; gap: 8px; }
+.objhead .sw { width: 12px; height: 12px; border-radius: 50%; }
+.objhead strong { font-size: 13px; }
+.objhead .btn { margin-left: auto; }
+.empty { color: var(--muted); font-size: 12px; }
+.objlist { display: flex; flex-wrap: wrap; gap: 5px; }
+.objlist button { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--raise); font-size: 11.5px; cursor: pointer; }
+.objlist button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.objlist i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+section.stage { position: relative; min-width: 0; min-height: 0; background: var(--stage); overflow: hidden; display: grid; grid-template-rows: 1fr auto; }
+.canvases { position: relative; min-height: 0; }
+.canvases canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#overlay { cursor: crosshair; }
+.tools { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 2px; padding: 4px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); box-shadow: 0 2px 8px rgba(0,0,0,.12); z-index: 3; }
+.tools .sep { height: 1px; background: var(--line); margin: 3px 2px; }
+.tool { position: relative; width: 34px; height: 32px; border: 0; border-radius: 5px; background: transparent; cursor: pointer; display: grid; place-items: center; color: var(--fg); }
+.tool svg { width: 19px; height: 19px; }
+.tool:hover { background: var(--raise); }
+.tool[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.tool .k { position: absolute; right: 2px; bottom: 0; font-family: var(--f-mono); font-size: 8.5px; opacity: .6; }
+.tool[data-tip]:hover::after { content: attr(data-tip); position: absolute; left: 40px; top: 50%; transform: translateY(-50%); white-space: nowrap; background: var(--fg); color: var(--bg); padding: 3px 7px; border-radius: 4px; font-size: 11.5px; pointer-events: none; z-index: 5; }
+.views { position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100% - 70px); }
+.views .seg { background: var(--panel); box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.brushbox { position: absolute; left: 58px; top: 10px; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); font-size: 12px; }
+.brushbox input[type=range] { width: 110px; accent-color: var(--accent); }
+.brushbox .sizebox { display: inline-flex; align-items: center; gap: 6px; }
+.brushbox input[type=number].numin { width: 62px; }
+.brand .ver { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; margin-left: 4px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--muted); font-family: var(--f-mono); font-size: 11px; font-weight: 500; font-stretch: 100%; vertical-align: 2px; letter-spacing: 0; }
+input[type=number].numin { width: 66px; flex: none; height: 26px; padding: 0 5px; text-align: right; }
+.unit { width: 30px; flex: none; color: var(--muted); font-size: 11px; font-family: var(--f-mono); }
+.hint { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 3; max-width: min(560px, calc(100% - 32px)); padding: 8px 12px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); font-size: 12.5px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.legend { position: absolute; right: 10px; bottom: 12px; z-index: 2; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; padding: 5px 9px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font-size: 11px; color: var(--muted); max-width: calc(100% - 20px); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.status { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 6px 12px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); border-top: 1px solid var(--line); background: var(--panel); font-size: 12px; color: var(--muted); }
+.status .num { color: var(--fg); }
+.status .grow { flex: 1; }
+.busy { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; background: color-mix(in srgb, var(--stage) 70%, transparent); }
+.busy div { padding: 12px 18px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); font-weight: 600; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 50; padding: 9px 14px; border-radius: 7px; background: var(--fg); color: var(--bg); font-size: 12.5px; max-width: calc(100% - 32px); box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+.err { color: var(--bad); }
+.drop { outline: 3px dashed var(--accent); outline-offset: -8px; }
+.kbd { font-family: var(--f-mono); font-size: 11px; padding: 0 4px; border: 1px solid var(--line-strong); border-radius: 3px; }
+@media (max-width: 860px) {
+  .app { height: auto; min-height: 100%; }
+  main.work { grid-template-columns: 1fr; }
+  section.stage { height: 64vh; min-height: 380px; order: -1; }
+  aside.panel { border-right: 0; overflow: visible; }
+  .brand p { display: none; }
+  .tools { flex-direction: row; top: auto; bottom: 10px; right: 10px; overflow-x: auto; }
+  .tools .sep { width: 1px; height: auto; margin: 2px 3px; }
+  .tool[data-tip]:hover::after { display: none; }
+  .views { left: 10px; right: 10px; max-width: none; justify-content: flex-start; flex-wrap: nowrap; }
+  .views .seg { overflow-x: auto; min-width: 0; }
+  .views .seg button { flex: none; }
+  .legend { display: none; }
+  .hint { bottom: 62px; }
+  .brushbox { left: 10px; top: 50px; flex-wrap: wrap; max-width: calc(100% - 20px); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><h1>DinoTown <b>Flowmapper</b> <span class="ver" id="appVer">v2</span></h1><p>Flowmaps, foam and height for Source water, straight from a .vmf</p></div>
+    <div class="actions">
+      <button class="btn primary" id="btnOpen" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h6l2 2h10v10H3z"/></svg>Open map…</button>
+      <button class="btn" id="btnOpenScene" type="button">Open scene</button>
+      <button class="btn" id="btnSaveScene" type="button">Save scene</button>
+      <button class="btn primary" id="btnExport" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m-5-5 5 5 5-5M4 20h16"/></svg>Export for Source</button>
+      <input type="file" id="fileMap" accept=".vmf,.obj,.json" hidden>
+      <input type="file" id="fileScene" accept=".json" hidden>
+    </div>
+  </header>
+  <main class="work">
+    <aside class="panel" id="panel">
+      <div class="sec" id="secMap">
+        <h2>Map <span class="tag" id="mapTag"></span></h2>
+        <div class="body">
+          <p class="note" id="srcNote"></p>
+          <div class="row"><label for="selWaterMat">Water material</label><div class="ctl"><select id="selWaterMat"></select></div></div>
+          <div class="row"><label for="selLevel">Water surface</label><div class="ctl"><select id="selLevel"></select></div></div>
+          <div class="row"><label for="inWaterZ">Water height Z</label><div class="ctl"><input type="number" id="inWaterZ" step="1"></div></div>
+          <div class="row"><label>Blocks water</label><div class="ctl"><div class="pair"><input type="number" id="inBandLo" step="1" title="Lowest height above the water surface that counts as an obstacle"><input type="number" id="inBandHi" step="1" title="Geometry higher than this above the water (bridges, ceilings) is ignored"></div></div></div>
+          <p class="note">Geometry between these heights above the water blocks flow. Bridges and ceilings above the top value are ignored.</p>
+          <div class="lbl">Flowmap area (Hammer units)</div>
+          <div class="quad">
+            <label for="inX0">X min<input type="number" id="inX0" step="16"></label><label for="inX1">X max<input type="number" id="inX1" step="16"></label>
+            <label for="inY0">Y min<input type="number" id="inY0" step="16"></label><label for="inY1">Y max<input type="number" id="inY1" step="16"></label></div>
+          <div class="btnrow"><button class="btn small" id="btnFitWater" type="button">Fit to water</button><button class="btn small" id="btnDrawArea" type="button">Draw area</button><label class="check" title="Grow the area slightly so the Hammer texture values come out as round numbers"><input type="checkbox" id="chkSnap">Round Hammer values</label></div>
+          <div class="row"><label for="selRes">Simulation grid</label><div class="ctl"><select id="selRes"><option value="192">192 (fast)</option><option value="256">256</option><option value="320">320</option><option value="384">384</option><option value="512">512</option><option value="768">768</option><option value="1024">1024 (slow)</option></select></div></div>
+          <div class="row"><label>Area edges</label><div class="ctl"><div class="seg" id="segEdges"><button type="button" data-v="closed">Walls</button><button type="button" data-v="open">Open</button></div></div></div>
+          <label class="check"><input type="checkbox" id="chkOutside">Outside the water brushes counts as land</label>
+          <label class="check"><input type="checkbox" id="chkNoFloor">Cells with nothing below the water count as land</label>
+          <div id="classesWrap" hidden><div class="lbl" style="margin-bottom:4px">Brush entities that block water</div><div class="classes" id="classes"></div></div>
+          <div class="row" id="propRow" hidden><label for="rngPropR">Prop blocker size</label><div class="ctl"><input type="range" id="rngPropR" min="8" max="256" step="4"><output id="outPropR"></output></div></div>
+          <p class="note" id="propNote" hidden></p>
+        </div>
+      </div>
+      <div class="sec" id="secObj">
+        <h2>Water objects <span class="tag" id="objTag"></span></h2>
+        <div class="body">
+          <div class="objlist" id="objList"></div>
+          <div id="objEditor"></div>
+        </div>
+      </div>
+      <div class="sec" id="secSim">
+        <h2>Simulation <span class="tag" id="simTag"></span></h2>
+        <div class="body">
+          <div class="row"><label for="rngFlow">Flow amount</label><div class="ctl"><input type="range" id="rngFlow" min="0.1" max="3" step="0.05"><output id="outFlow"></output></div></div>
+          <div class="row"><label for="rngDamp">Friction</label><div class="ctl"><input type="range" id="rngDamp" min="0" max="0.05" step="0.001"><output id="outDamp"></output></div></div>
+          <div class="row"><label for="rngShallow">Shallow slowdown</label><div class="ctl"><input type="range" id="rngShallow" min="0" max="0.6" step="0.01"><output id="outShallow"></output></div></div>
+          <div class="row"><label for="rngShallowD">Shallow below</label><div class="ctl"><input type="range" id="rngShallowD" min="4" max="160" step="2"><output id="outShallowD"></output></div></div>
+          <div class="row"><label for="rngSwirl">Swirl detail</label><div class="ctl"><input type="range" id="rngSwirl" min="0" max="0.6" step="0.01"><output id="outSwirl"></output></div></div>
+          <div class="row"><label for="rngAvg">Average over</label><div class="ctl"><input type="range" id="rngAvg" min="20" max="3000" step="10"><output id="outAvg"></output></div></div>
+          <div class="row"><label for="rngSpeed">Steps per frame</label><div class="ctl"><input type="range" id="rngSpeed" min="1" max="40" step="1"><output id="outSpeed"></output></div></div>
+          <div class="row"><label for="rngIters">Pressure cycles</label><div class="ctl"><input type="range" id="rngIters" min="1" max="4" step="1"><output id="outIters"></output></div></div>
+          <label class="check"><input type="checkbox" id="chkBalance">Outlets drain exactly what the inlets add</label>
+          <div class="lbl">Foam</div>
+          <div class="row"><label for="rngFoamImp">Where water hits</label><div class="ctl"><input type="range" id="rngFoamImp" min="0" max="4" step="0.05"><output id="outFoamImp"></output></div></div>
+          <div class="row"><label for="rngFoamSpd">In fast water</label><div class="ctl"><input type="range" id="rngFoamSpd" min="0" max="4" step="0.05"><output id="outFoamSpd"></output></div></div>
+          <div class="row"><label for="rngFoamTurb">In swirls</label><div class="ctl"><input type="range" id="rngFoamTurb" min="0" max="4" step="0.05"><output id="outFoamTurb"></output></div></div>
+          <div class="row"><label for="rngFoamDecay">Fades after</label><div class="ctl"><input type="range" id="rngFoamDecay" min="20" max="1000" step="5"><output id="outFoamDecay"></output></div></div>
+        </div>
+      </div>
+      <div class="sec" id="secExp">
+        <h2>Export <span class="tag" id="expTag"></span></h2>
+        <div class="body">
+          <div class="row"><label for="selSize">Flowmap size</label><div class="ctl"><select id="selSize"><option value="128">128</option><option value="256">256</option><option value="512">512</option><option value="1024">1024</option><option value="2048">2048</option></select><span class="num" id="sizeOut" style="white-space:nowrap;color:var(--muted)"></span></div></div>
+          <div class="row"><label for="rngGain">Flow strength</label><div class="ctl"><input type="range" id="rngGain" min="0.2" max="2" step="0.05"><output id="outGain"></output></div></div>
+          <div class="row"><label for="rngEven">Even out speeds</label><div class="ctl"><input type="range" id="rngEven" min="0" max="100" step="5"><output id="outEven"></output></div></div>
+          <div class="row"><label for="rngBlur">Smoothing</label><div class="ctl"><input type="range" id="rngBlur" min="0" max="8" step="1"><output id="outBlur"></output></div></div>
+          <div class="row"><label>Direction</label><div class="ctl" style="gap:14px"><label class="check"><input type="checkbox" id="chkFlipRed">Flip red</label><label class="check"><input type="checkbox" id="chkFlipGreen">Flip green</label></div></div>
+          <p class="note">The default follows Valve's water shader, which scrolls the water against the stored vector. No inverting in an image editor needed. Flip a channel only if the water runs the wrong way in game.</p>
+          <label class="check"><input type="checkbox" id="chkFoam">Foam in alpha channel</label>
+          <div class="row"><label for="rngFoamGain">Foam brightness</label><div class="ctl"><input type="range" id="rngFoamGain" min="0.2" max="6" step="0.1"><output id="outFoamGain"></output></div></div>
+          <div class="row"><label for="rngShore">Shore foam</label><div class="ctl"><input type="range" id="rngShore" min="0" max="1" step="0.05"><output id="outShore"></output></div></div>
+          <div class="row"><label>VTF format</label><div class="ctl"><div class="seg" id="segFmt"><button type="button" data-v="BGRA8888">BGRA8888</button><button type="button" data-v="DXT5">DXT5</button></div></div></div>
+          <label class="check"><input type="checkbox" id="chkClamp">Clamp at the edges (no tiling)</label>
+          <div class="row"><label for="inMatPath">Flowmap path</label><div class="ctl"><input type="text" id="inMatPath" spellcheck="false"></div></div>
+          <div class="row"><label>Water texture size</label><div class="ctl"><div class="pair"><input type="number" id="inMapW" min="1" step="1"><input type="number" id="inMapH" min="1" step="1"></div></div></div>
+          <p class="note">Pixel size of the water material's <span class="mono">$basetexture</span> (or its <span class="mono">$normalmap</span> if it has no base texture). Hammer's texture browser shows it. The texture scale below depends on it.</p>
+          <div class="hammer" id="hammerBox"></div>
+          <label class="check" id="patchRow"><input type="checkbox" id="chkPatch">Include a copy of the .vmf with these values already on the water faces</label>
+          <div class="row" id="patchMatRow"><label for="inPatchMat">Water material</label><div class="ctl"><input type="text" id="inPatchMat" spellcheck="false" placeholder="keep current"></div></div>
+          <div class="lbl">Add to your water material (.vmt)</div>
+          <textarea id="vmtOut" rows="9" readonly spellcheck="false"></textarea>
+          <div class="ctl" style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" id="btnCopyVmt" type="button">Copy VMT lines</button><button class="btn small" id="btnCopyHammer" type="button">Copy Hammer values</button><button class="btn small" id="btnPng" type="button">Flowmap PNG</button></div>
+          <button class="btn primary" id="btnExport2" type="button">Download Source pack (.zip)</button>
+          <p class="note">The pack has the .vtf in its <span class="mono">materials/</span> folder, plus TGA and PNG copies, separate foam, height and depth maps, these values in a text file, and the scene.</p>
+        </div>
+      </div>
+      <div class="sec closed" id="secHelp">
+        <h2>Keys and tips</h2>
+        <div class="body">
+          <p class="note"><span class="kbd">V</span> select · <span class="kbd">H</span> or middle-drag pan · wheel zoom · <span class="kbd">F</span> fit view · <span class="kbd">Space</span> run/pause · <span class="kbd">Del</span> remove · <span class="kbd">Ctrl+Z</span> / <span class="kbd">Ctrl+Y</span> undo/redo · <span class="kbd">[</span> <span class="kbd">]</span> brush size</p>
+          <p class="note">Drag an object to move it. Drag the square on its ring to resize. Drag the round handle on an arrow to aim it.</p>
+          <p class="note">Push and Calm zones can be rectangles: pick <b>Rectangle</b> in the shape box above the map and drag along the water. Painting has a Rectangle mode too.</p>
+          <p class="note">Every slider has a box next to it. Type a value and press Enter. Sizes and strengths can go past the end of the slider.</p>
+          <p class="note">Check alignment with <span class="mono">"$flow_debug" "1"</span> in the water material. The flowmap colours then show on the water in Hammer and in game.</p>
+          <p class="note">If water runs the wrong way in game, tick Flip red and/or Flip green in Export and export again.</p>
+        </div>
+      </div>
+    </aside>
+    <section class="stage" id="stage">
+      <div class="canvases" id="canvases">
+        <canvas id="gl"></canvas>
+        <canvas id="overlay"></canvas>
+        <div class="tools" id="tools" role="toolbar" aria-label="Tools"></div>
+        <div class="brushbox" id="brushbox" hidden><div class="seg" id="segPaint"><button type="button" data-v="brush">Brush</button><button type="button" data-v="rect">Rectangle</button></div><span class="sizebox" id="brushSize"><label for="rngBrush">Size</label><input type="range" id="rngBrush" min="8" max="1024" step="8"></span></div>
+        <div class="brushbox" id="zonebox" hidden><span class="lbl">Shape</span><div class="seg" id="segZone"><button type="button" data-v="circle">Circle</button><button type="button" data-v="box">Rectangle</button></div></div>
+        <div class="views"><div class="seg" id="segView"></div><label class="check" style="background:var(--panel);padding:3px 8px;border-radius:5px;border:1px solid var(--line)"><input type="checkbox" id="chkArrows">Arrows</label></div>
+        <div class="legend" id="legend"></div>
+        <div class="hint" id="hint" hidden></div>
+        <div class="busy" id="busy" hidden><div id="busyText">Working…</div></div>
+      </div>
+      <div class="status">
+        <button class="btn small primary" id="btnRun" type="button">Pause</button>
+        <button class="btn small" id="btnReset" type="button" title="Start the simulation again from still water">Restart</button>
+        <span>Step <span class="num" id="stStep">0</span></span><span class="num" id="stRate" style="color:var(--muted)"></span>
+        <span id="stSettle" class="chip">Warming up</span>
+        <span class="grow"></span>
+        <span>Grid <span class="num" id="stGrid"></span></span>
+        <span>Cursor <span class="num" id="stCursor">–</span></span>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+// ===== Geometry: VMF / OBJ import and collision rasterising (no DOM) =====
+const Geom = (() => {
+  'use strict';
+
+  // ---------- KeyValues (VMF) tokenizer/parser with value offsets ----------
+  function parseKV(text) {
+    const root = { name: 'root', props: [], kids: [] };
+    const stack = [root];
+    let i = 0, n = text.length;
+    let pendingKey = null, pendingKeyPos = -1;
+    while (i < n) {
+      const c = text.charCodeAt(i);
+      if (c <= 32) { i++; continue; }
+      if (c === 47 && text.charCodeAt(i + 1) === 47) { // //comment
+        while (i < n && text.charCodeAt(i) !== 10) i++;
+        continue;
+      }
+      if (c === 123) { // {
+        const node = { name: pendingKey || '', props: [], kids: [] };
+        stack[stack.length - 1].kids.push(node);
+        stack.push(node);
+        pendingKey = null; i++; continue;
+      }
+      if (c === 125) { // }
+        if (stack.length > 1) stack.pop();
+        pendingKey = null; i++; continue;
+      }
+      let tok, start, end;
+      if (c === 34) { // quoted
+        start = i + 1; let j = start;
+        while (j < n && text.charCodeAt(j) !== 34) j++;
+        end = j; tok = text.slice(start, end); i = j + 1;
+      } else {
+        start = i; let j = i;
+        while (j < n) { const d = text.charCodeAt(j); if (d <= 32 || d === 123 || d === 125 || d === 34) break; j++; }
+        end = j; tok = text.slice(start, end); i = j;
+      }
+      if (pendingKey === null) { pendingKey = tok; pendingKeyPos = start; }
+      else {
+        stack[stack.length - 1].props.push({ k: pendingKey, v: tok, s: start, e: end });
+        pendingKey = null;
+      }
+    }
+    return root;
+  }
+  const prop = (node, k) => { const kl = k.toLowerCase(); for (const p of node.props) if (p.k.toLowerCase() === kl) return p.v; return undefined; };
+  const propObj = (node, k) => { const kl = k.toLowerCase(); for (const p of node.props) if (p.k.toLowerCase() === kl) return p; return undefined; };
+  const kids = (node, name) => node.kids.filter(c => c.name.toLowerCase() === name);
+
+  // ---------- vector helpers ----------
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+  const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const len = a => Math.hypot(a[0], a[1], a[2]);
+  const norm = a => { const l = len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+  const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+
+  function parsePlane(s) {
+    const m = s.match(/-?[\d.eE+-]+/g); if (!m || m.length < 9) return null;
+    const v = m.map(Number);
+    const p1 = [v[0], v[1], v[2]], p2 = [v[3], v[4], v[5]], p3 = [v[6], v[7], v[8]];
+    // VMF points are clockwise seen from outside -> outward normal = (p3-p1) x (p2-p1)
+    const nrm = norm(cross(sub(p3, p1), sub(p2, p1)));
+    return { n: nrm, d: dot(nrm, p1) };
+  }
+
+  // Convex polytope vertices from half-spaces n.x <= d
+  function polytope(planes, eps = 0.01) {
+    const verts = [];
+    const np = planes.length;
+    for (let a = 0; a < np - 2; a++) for (let b = a + 1; b < np - 1; b++) {
+      const nab = cross(planes[a].n, planes[b].n);
+      if (len(nab) < 1e-9) continue;
+      for (let c = b + 1; c < np; c++) {
+        const den = dot(planes[c].n, nab);
+        if (Math.abs(den) < 1e-9) continue;
+        // x = (d_a (n_b x n_c) + d_b (n_c x n_a) + d_c (n_a x n_b)) / (n_a . (n_b x n_c))
+        const A = planes[a], B = planes[b], C = planes[c];
+        const nbc = cross(B.n, C.n), nca = cross(C.n, A.n);
+        const det = dot(A.n, nbc);
+        if (Math.abs(det) < 1e-9) continue;
+        const x = mul(add(add(mul(nbc, A.d), mul(nca, B.d)), mul(nab, C.d)), 1 / det);
+        let ok = true;
+        for (let k = 0; k < np; k++) { if (dot(planes[k].n, x) > planes[k].d + eps) { ok = false; break; } }
+        if (!ok) continue;
+        let dup = false;
+        for (const v of verts) if (Math.abs(v[0] - x[0]) < eps && Math.abs(v[1] - x[1]) < eps && Math.abs(v[2] - x[2]) < eps) { dup = true; break; }
+        if (!dup) verts.push(x);
+      }
+    }
+    return verts;
+  }
+
+  // vertices on a plane, ordered counter-clockwise seen from outside (normal toward viewer)
+  function facePoly(verts, pl, eps = 0.02) {
+    const on = verts.filter(v => Math.abs(dot(pl.n, v) - pl.d) < eps);
+    if (on.length < 3) return null;
+    const c = on.reduce((s, v) => add(s, v), [0, 0, 0]).map(x => x / on.length);
+    // basis on plane
+    let u = norm(sub(on[0], c)); if (len(sub(on[0], c)) < 1e-9) u = norm(cross(pl.n, [0, 0, 1]));
+    const w = cross(pl.n, u);
+    on.sort((p, q) => Math.atan2(dot(sub(p, c), w), dot(sub(p, c), u)) - Math.atan2(dot(sub(q, c), w), dot(sub(q, c), u)));
+    return on;
+  }
+
+  // ---------- VMF loading ----------
+  const NONSOLID_TOOLS = /^tools\/(toolstrigger|toolsclip|toolsplayerclip|toolsnpcclip|toolshint|toolsskip|toolsareaportal|toolsoccluder|toolsfog|toolsblocklight|toolsinvisibleladder|toolsblockbullets|toolsblock_los|toolsorigin|toolsdotted|toolsclip_.*|toolsbotclip|toolsgrenadeclip|toolsdroneclip|toolsdotted)$/i;
+  const SOLID_CLASSES = new Set(['worldspawn', 'func_detail', 'func_brush', 'func_wall', 'func_wall_toggle', 'func_lod', 'func_breakable', 'func_breakable_surf', 'func_door', 'func_door_rotating', 'func_movelinear', 'func_physbox', 'func_physbox_multiplayer', 'func_rotating', 'func_tracktrain', 'func_tanktrain', 'func_static', 'func_reflective_glass', 'func_monitor']);
+  const WATERISH = /water|liquid|slime|sludge|swamp|river|lake|ocean|\bsea\b|pond|canal|puddle|toxic|lava|murk/i;
+
+  function loadVMF(text, onProgress) {
+    const tree = parseKV(text);
+    const brushes = [];      // {faces:[{verts,n,mat,sideNode}], zmin,zmax, xmin..., cls, isDisp, nonsolid, planes}
+    const disps = [];        // {tris: Float64Array (x,y,z *3 per tri), brushIdx}
+    const props = [];
+    const classCount = {};
+    const mapName = '';
+    let solidNodes = [];
+    function collectSolids(node, cls, hidden) {
+      for (const k of node.kids) {
+        const nm = k.name.toLowerCase();
+        if (nm === 'solid') solidNodes.push({ node: k, cls, hidden });
+        else if (nm === 'hidden') collectSolids(k, cls, true);
+      }
+    }
+    for (const top of tree.kids) {
+      const nm = top.name.toLowerCase();
+      if (nm === 'world') collectSolids(top, 'worldspawn', false);
+      else if (nm === 'entity') {
+        const cls = (prop(top, 'classname') || '').toLowerCase();
+        classCount[cls] = (classCount[cls] || 0) + 1;
+        if (/^prop_/.test(cls)) {
+          const o = (prop(top, 'origin') || '').split(/\s+/).map(Number);
+          if (o.length === 3 && o.every(isFinite)) props.push({ id: prop(top, 'id') || String(props.length), x: o[0], y: o[1], z: o[2], model: prop(top, 'model') || '', cls });
+        }
+        collectSolids(top, cls, false);
+      } else if (nm === 'hidden') {
+        for (const h of top.kids) if (h.name.toLowerCase() === 'entity') {
+          const cls = (prop(h, 'classname') || '').toLowerCase();
+          classCount[cls] = (classCount[cls] || 0) + 1;
+          collectSolids(h, cls, true);
+        }
+      }
+    }
+    const brushClassCount = {};
+    let count = 0;
+    for (const sn of solidNodes) {
+      count++;
+      if (onProgress && count % 500 === 0) onProgress(count / solidNodes.length);
+      const sides = kids(sn.node, 'side');
+      const planes = [], sideInfo = [];
+      for (const s of sides) {
+        const pl = parsePlane(prop(s, 'plane') || '');
+        if (!pl) continue;
+        planes.push(pl);
+        sideInfo.push({ node: s, mat: (prop(s, 'material') || '').toLowerCase().replace(/\\/g, '/'), disp: kids(s, 'dispinfo')[0] || null });
+      }
+      if (planes.length < 4) continue;
+      const verts = polytope(planes);
+      if (verts.length < 4) continue;
+      let zmin = Infinity, zmax = -Infinity, xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+      for (const v of verts) { if (v[0] < xmin) xmin = v[0]; if (v[0] > xmax) xmax = v[0]; if (v[1] < ymin) ymin = v[1]; if (v[1] > ymax) ymax = v[1]; if (v[2] < zmin) zmin = v[2]; if (v[2] > zmax) zmax = v[2]; }
+      const faces = [];
+      let isDisp = false, nonsolid = false;
+      for (let k = 0; k < planes.length; k++) {
+        const poly = facePoly(verts, planes[k]);
+        if (sideInfo[k].disp) isDisp = true;
+        if (NONSOLID_TOOLS.test(sideInfo[k].mat)) nonsolid = true;
+        if (!poly) continue;
+        faces.push({ verts: poly, n: planes[k].n, mat: sideInfo[k].mat, side: sideInfo[k].node, disp: sideInfo[k].disp });
+      }
+      brushClassCount[sn.cls] = (brushClassCount[sn.cls] || 0) + 1;
+      const b = { planes, faces, zmin, zmax, xmin, xmax, ymin, ymax, cls: sn.cls, isDisp, nonsolid, hidden: sn.hidden };
+      brushes.push(b);
+      if (isDisp) {
+        for (const f of faces) if (f.disp) {
+          const tri = buildDisp(f);
+          if (tri) disps.push({ tris: tri, brush: brushes.length - 1, mat: f.mat });
+        }
+      }
+    }
+    // water candidates: up-facing faces by material
+    const upMats = {};
+    for (let bi = 0; bi < brushes.length; bi++) {
+      const b = brushes[bi];
+      for (const f of b.faces) {
+        if (f.n[2] > 0.99 && !f.disp) {
+          const m = f.mat;
+          if (!upMats[m]) upMats[m] = { mat: m, faces: [], waterish: WATERISH.test(m) && !/^tools\//.test(m), area: 0 };
+          const z = f.verts.reduce((s, v) => s + v[2], 0) / f.verts.length;
+          const area = polyArea2D(f.verts);
+          const brushLike = b.faces.length > 1 && b.faces.every(x => x === f || /^tools\//.test(x.mat));
+          upMats[m].faces.push({ z, poly: f.verts.map(v => [v[0], v[1]]), brush: bi, side: f.side, area, brushLike });
+          upMats[m].area += area;
+        }
+      }
+    }
+    const worldNode = tree.kids.find(k => k.name.toLowerCase() === 'world');
+    return { kind: 'vmf', tree, text, brushes, disps, props, classCount, brushClassCount, upMats, worldBounds: boundsOf(brushes) };
+  }
+
+  function boundsOf(brushes) {
+    let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity, zmin = Infinity, zmax = -Infinity;
+    for (const b of brushes) { if (b.cls === 'worldspawn' && b.faces.some(f => /toolsskybox/.test(f.mat))) continue; xmin = Math.min(xmin, b.xmin); xmax = Math.max(xmax, b.xmax); ymin = Math.min(ymin, b.ymin); ymax = Math.max(ymax, b.ymax); zmin = Math.min(zmin, b.zmin); zmax = Math.max(zmax, b.zmax); }
+    return { xmin, xmax, ymin, ymax, zmin, zmax };
+  }
+
+  function polyArea2D(vs) { let a = 0; for (let i = 0; i < vs.length; i++) { const p = vs[i], q = vs[(i + 1) % vs.length]; a += p[0] * q[1] - q[0] * p[1]; } return Math.abs(a) / 2; }
+
+  function rowsOf(node, name, per) {
+    const sec = kids(node, name)[0];
+    if (!sec) return null;
+    const out = [];
+    for (const p of sec.props) {
+      const m = /^row(\d+)$/i.exec(p.k); if (!m) continue;
+      out[+m[1]] = p.v.trim().split(/\s+/).map(Number);
+    }
+    return out;
+  }
+
+  // Displacement: corners CCW from outside; rows run start -> corner[s+3], columns start -> corner[s+1]
+  function buildDisp(face) {
+    const di = face.disp;
+    const power = +prop(di, 'power') || 0;
+    const n = (1 << power) + 1;
+    if (face.verts.length !== 4 || power < 1 || power > 4) return null;
+    const sp = (prop(di, 'startposition') || '').replace(/[\[\]]/g, ' ').trim().split(/\s+/).map(Number);
+    const elev = +prop(di, 'elevation') || 0;
+    let s = 0, best = Infinity;
+    for (let k = 0; k < 4; k++) { const d = len(sub(face.verts[k], sp)); if (d < best) { best = d; s = k; } }
+    const P0 = face.verts[s], P1 = face.verts[(s + 1) % 4], P2 = face.verts[(s + 2) % 4], P3 = face.verts[(s + 3) % 4];
+    const normals = rowsOf(di, 'normals'), dists = rowsOf(di, 'distances'), offs = rowsOf(di, 'offsets');
+    const pos = new Float64Array(n * n * 3);
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1);
+      const L = lerp3(P0, P3, t), R = lerp3(P1, P2, t);
+      for (let j = 0; j < n; j++) {
+        let p = lerp3(L, R, j / (n - 1));
+        const nr = normals && normals[i] ? [normals[i][j * 3] || 0, normals[i][j * 3 + 1] || 0, normals[i][j * 3 + 2] || 0] : [0, 0, 0];
+        const ds = dists && dists[i] ? (dists[i][j] || 0) : 0;
+        const of = offs && offs[i] ? [offs[i][j * 3] || 0, offs[i][j * 3 + 1] || 0, offs[i][j * 3 + 2] || 0] : [0, 0, 0];
+        p = add(add(add(p, mul(nr, ds)), of), mul(face.n, elev));
+        const o = (i * n + j) * 3; pos[o] = p[0]; pos[o + 1] = p[1]; pos[o + 2] = p[2];
+      }
+    }
+    const tris = new Float64Array((n - 1) * (n - 1) * 2 * 9);
+    let t = 0;
+    const put = (idx) => { tris[t++] = pos[idx * 3]; tris[t++] = pos[idx * 3 + 1]; tris[t++] = pos[idx * 3 + 2]; };
+    for (let i = 0; i < n - 1; i++) for (let j = 0; j < n - 1; j++) {
+      const a = i * n + j, b = i * n + j + 1, c = (i + 1) * n + j + 1, d = (i + 1) * n + j;
+      if ((i + j) % 2 === 0) { put(a); put(b); put(c); put(a); put(c); put(d); }
+      else { put(a); put(b); put(d); put(b); put(c); put(d); }
+    }
+    return { tris, grid: pos, n };
+  }
+
+  // ---------- OBJ loading ----------
+  function loadOBJ(text, opts = {}) {
+    const up = opts.up || 'z'; const sc = opts.scale || 1;
+    const vs = []; const tris = []; const triMat = []; const mats = [];
+    let cur = 0; const matIdx = { '': 0 }; mats.push('');
+    const lines = text.split(/\r?\n/);
+    for (const line of lines) {
+      if (line.startsWith('v ')) {
+        const p = line.slice(2).trim().split(/\s+/).map(Number);
+        let x = p[0] * sc, y = p[1] * sc, z = p[2] * sc;
+        if (up === 'y') { const t = y; y = -z; z = t; }
+        vs.push([x, y, z]);
+      } else if (line.startsWith('usemtl')) {
+        const m = line.slice(6).trim().toLowerCase();
+        if (!(m in matIdx)) { matIdx[m] = mats.length; mats.push(m); }
+        cur = matIdx[m];
+      } else if (line.startsWith('f ')) {
+        const ids = line.slice(2).trim().split(/\s+/).map(tk => { let k = parseInt(tk, 10); return k < 0 ? vs.length + k : k - 1; });
+        for (let k = 1; k + 1 < ids.length; k++) {
+          const a = vs[ids[0]], b = vs[ids[k]], c = vs[ids[k + 1]];
+          if (!a || !b || !c) continue;
+          tris.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); triMat.push(cur);
+        }
+      }
+    }
+    const T = new Float64Array(tris);
+    let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity, zmin = Infinity, zmax = -Infinity;
+    for (let i = 0; i < T.length; i += 3) { xmin = Math.min(xmin, T[i]); xmax = Math.max(xmax, T[i]); ymin = Math.min(ymin, T[i + 1]); ymax = Math.max(ymax, T[i + 1]); zmin = Math.min(zmin, T[i + 2]); zmax = Math.max(zmax, T[i + 2]); }
+    // up-facing water-ish faces
+    const upMats = {};
+    for (let t = 0; t < triMat.length; t++) {
+      const o = t * 9;
+      const a = [T[o], T[o + 1], T[o + 2]], b = [T[o + 3], T[o + 4], T[o + 5]], c = [T[o + 6], T[o + 7], T[o + 8]];
+      const nn = cross(sub(b, a), sub(c, a)); const l = len(nn); if (l < 1e-9) continue;
+      const nz = Math.abs(nn[2] / l); // OBJ winding may vary
+      if (nz > 0.99) {
+        const m = mats[triMat[t]];
+        if (!upMats[m]) upMats[m] = { mat: m, faces: [], waterish: WATERISH.test(m) && !/^tools/.test(m), area: 0 };
+        const z = (a[2] + b[2] + c[2]) / 3, area = l / 2;
+        upMats[m].faces.push({ z, poly: [[a[0], a[1]], [b[0], b[1]], [c[0], c[1]]], area });
+        upMats[m].area += area;
+      }
+    }
+    return { kind: 'obj', tris: T, triMat, mats, upMats, props: [], brushes: [], disps: [], worldBounds: { xmin, xmax, ymin, ymax, zmin, zmax }, classCount: {}, brushClassCount: {} };
+  }
+
+  // ---------- water levels ----------
+  // group a material's faces by z (rounded)
+  function waterLevels(upMat) {
+    const g = {};
+    for (const f of upMat.faces) { const k = Math.round(f.z * 4) / 4; (g[k] = g[k] || { z: k, faces: [], area: 0 }).faces.push(f); g[k].area += f.area; }
+    return Object.values(g).sort((a, b) => b.area - a.area);
+  }
+  function suggestWater(geo) {
+    const list = Object.values(geo.upMats).sort((a, b) => (b.waterish - a.waterish) || (b.area - a.area));
+    return list;
+  }
+
+  // ---------- 2D convex helpers ----------
+  function hull2D(pts) {
+    if (pts.length < 3) return pts.slice();
+    const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lo = [], up = [];
+    for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 1e-9) lo.pop(); lo.push(q); }
+    for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 1e-9) up.pop(); up.push(q); }
+    up.pop(); lo.pop();
+    const h = lo.concat(up);
+    return h.length ? h : [p[0], p[p.length - 1]];
+  }
+  // clip polygon (array of [x,y,z]) against z >= lo and z <= hi
+  function clipZ(poly, lo, hi) {
+    let out = poly;
+    if (lo > -Infinity) out = clipPlane(out, v => v[2] - lo);
+    if (out.length && hi < Infinity) out = clipPlane(out, v => hi - v[2]);
+    return out;
+  }
+  function clipPlane(poly, f) {
+    const out = [];
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length];
+      const fa = f(a), fb = f(b);
+      if (fa >= 0) out.push(a);
+      if ((fa >= 0) !== (fb >= 0)) { const t = fa / (fa - fb); out.push(lerp3(a, b, t)); }
+    }
+    return out;
+  }
+
+  // ---------- grid rasteriser ----------
+  // grid: {W,H,x0,y1,cx,cy}  cell (i,j): x = x0 + (i+.5)*cx, y = y1 - (j+.5)*cy   (row 0 = north)
+  function toGrid(g, x, y) { return [(x - g.x0) / g.cx, (g.y1 - y) / g.cy]; }
+
+  // conservative fill of a convex polygon given in grid coordinates
+  function fillConvexConservative(mask, W, H, pts, val = 1) {
+    if (!pts.length) return;
+    let ymin = Infinity, ymax = -Infinity;
+    for (const p of pts) { if (p[1] < ymin) ymin = p[1]; if (p[1] > ymax) ymax = p[1]; }
+    const j0 = Math.max(0, Math.floor(ymin)), j1 = Math.min(H - 1, Math.floor(ymax));
+    for (let j = j0; j <= j1; j++) {
+      const ya = j, yb = j + 1;
+      if (yb < ymin || ya > ymax) continue;
+      // x-extent of polygon within band [ya,yb]
+      let xl = Infinity, xr = -Infinity;
+      const np = pts.length;
+      for (let k = 0; k < np; k++) {
+        const a = pts[k], b = pts[(k + 1) % np];
+        if (a[1] >= ya && a[1] <= yb) { if (a[0] < xl) xl = a[0]; if (a[0] > xr) xr = a[0]; }
+        const dy = b[1] - a[1];
+        if (Math.abs(dy) > 1e-12) {
+          for (const yy of [ya, yb]) {
+            const t = (yy - a[1]) / dy;
+            if (t >= 0 && t <= 1) { const x = a[0] + (b[0] - a[0]) * t; if (x < xl) xl = x; if (x > xr) xr = x; }
+          }
+        }
+      }
+      if (xl > xr) continue;
+      const i0 = Math.max(0, Math.floor(xl)), i1 = Math.min(W - 1, Math.floor(xr));
+      const row = j * W;
+      for (let i = i0; i <= i1; i++) mask[row + i] = val;
+    }
+  }
+  // fill by cell centres (for water area)
+  function fillPolyCenters(mask, W, H, pts, val = 1) {
+    let ymin = Infinity, ymax = -Infinity;
+    for (const p of pts) { ymin = Math.min(ymin, p[1]); ymax = Math.max(ymax, p[1]); }
+    const j0 = Math.max(0, Math.ceil(ymin - 0.5)), j1 = Math.min(H - 1, Math.floor(ymax - 0.5));
+    const np = pts.length;
+    for (let j = j0; j <= j1; j++) {
+      const yc = j + 0.5; const xs = [];
+      for (let k = 0; k < np; k++) {
+        const a = pts[k], b = pts[(k + 1) % np];
+        if ((a[1] <= yc) !== (b[1] <= yc)) xs.push(a[0] + (yc - a[1]) / (b[1] - a[1]) * (b[0] - a[0]));
+      }
+      xs.sort((p, q) => p - q);
+      for (let k = 0; k + 1 < xs.length; k += 2) {
+        const i0 = Math.max(0, Math.ceil(xs[k] - 0.5)), i1 = Math.min(W - 1, Math.floor(xs[k + 1] - 0.5));
+        for (let i = i0; i <= i1; i++) mask[j * W + i] = val;
+      }
+    }
+  }
+  // z-max raster of triangle at cell centres
+  function rasterTriZMax(zbuf, W, H, a, b, c, zcap) {
+    const minx = Math.max(0, Math.ceil(Math.min(a[0], b[0], c[0]) - 0.5)), maxx = Math.min(W - 1, Math.floor(Math.max(a[0], b[0], c[0]) - 0.5));
+    const miny = Math.max(0, Math.ceil(Math.min(a[1], b[1], c[1]) - 0.5)), maxy = Math.min(H - 1, Math.floor(Math.max(a[1], b[1], c[1]) - 0.5));
+    if (minx > maxx || miny > maxy) return;
+    const den = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]);
+    if (Math.abs(den) < 1e-12) return;
+    for (let j = miny; j <= maxy; j++) {
+      const py = j + 0.5;
+      for (let i = minx; i <= maxx; i++) {
+        const px = i + 0.5;
+        const w1 = ((b[1] - c[1]) * (px - c[0]) + (c[0] - b[0]) * (py - c[1])) / den;
+        const w2 = ((c[1] - a[1]) * (px - c[0]) + (a[0] - c[0]) * (py - c[1])) / den;
+        const w3 = 1 - w1 - w2;
+        if (w1 < -1e-6 || w2 < -1e-6 || w3 < -1e-6) continue;
+        const z = w1 * a[2] + w2 * b[2] + w3 * c[2];
+        if (z > zcap) continue;
+        const o = j * W + i;
+        if (z > zbuf[o]) zbuf[o] = z;
+      }
+    }
+  }
+
+  /*
+    params: { grid, waterZ, bandLo, bandHi, classes:Set (solid brush classes), waterMat, waterLevelZ, includeHidden }
+    returns { geomSolid:Uint8Array, floorZ:Float32Array, water:Uint8Array, hasWaterArea }
+  */
+  function rasterize(geo, P) {
+    const g = P.grid, W = g.W, H = g.H, N = W * H;
+    const solid = new Uint8Array(N), water = new Uint8Array(N);
+    const floorZ = new Float32Array(N).fill(-Infinity);
+    const zlo = P.waterZ + P.bandLo, zhi = P.waterZ + P.bandHi;
+    const bx0 = g.x0 - g.cx * 2, bx1 = g.x0 + g.cx * (W + 2), by0 = g.y1 - g.cy * (H + 2), by1 = g.y1 + g.cy * 2;
+    const G = (v) => [(v[0] - g.x0) / g.cx, (g.y1 - v[1]) / g.cy, v[2]];
+    const waterMat = P.waterMat || null;
+    const isWaterBrush = (b) => waterMat && b.faces.some(f => f.mat === waterMat);
+    // brushes
+    for (const b of geo.brushes || []) {
+      if (b.xmax < bx0 || b.xmin > bx1 || b.ymax < by0 || b.ymin > by1) continue;
+      if (b.isDisp || b.nonsolid) continue;
+      if (!P.classes.has(b.cls)) continue;
+      if (b.hidden && P.includeHidden === false) continue;
+      if (isWaterBrush(b)) continue;
+      if (/toolsskybox/.test(b.faces[0] && b.faces[0].mat) && b.faces.every(f => /toolsskybox/.test(f.mat))) {
+        // skybox shell: still a wall, keep
+      }
+      // collision slab cross-section
+      if (b.zmax > zlo && b.zmin < zhi) {
+        const pl = b.planes.concat([{ n: [0, 0, 1], d: zhi }, { n: [0, 0, -1], d: -zlo }]);
+        const vs = polytope(pl);
+        if (vs.length >= 3) {
+          const h = hull2D(vs.map(v => { const q = G(v); return [q[0], q[1]]; }));
+          fillConvexConservative(solid, W, H, h, 1);
+        }
+      }
+      // floors
+      if (b.zmin <= zlo) {
+        for (const f of b.faces) {
+          if (f.n[2] <= 0.01) continue;
+          const vs = f.verts.map(G);
+          for (let k = 1; k + 1 < vs.length; k++) rasterTriZMax(floorZ, W, H, vs[0], vs[k], vs[k + 1], zlo);
+        }
+      }
+    }
+    // displacement & OBJ triangles
+    const doTris = (T, count, skipWater) => {
+      for (let t = 0; t < count; t++) {
+        const o = t * 9;
+        const a = [T[o], T[o + 1], T[o + 2]], b = [T[o + 3], T[o + 4], T[o + 5]], c = [T[o + 6], T[o + 7], T[o + 8]];
+        const txmin = Math.min(a[0], b[0], c[0]), txmax = Math.max(a[0], b[0], c[0]), tymin = Math.min(a[1], b[1], c[1]), tymax = Math.max(a[1], b[1], c[1]);
+        if (txmax < bx0 || txmin > bx1 || tymax < by0 || tymin > by1) continue;
+        if (skipWater && skipWater(t)) continue;
+        const tzmin = Math.min(a[2], b[2], c[2]), tzmax = Math.max(a[2], b[2], c[2]);
+        if (tzmax > zlo && tzmin < zhi) {
+          const cl = clipZ([a, b, c], zlo, zhi);
+          if (cl.length >= 2) fillConvexConservative(solid, W, H, cl.map(v => { const q = G(v); return [q[0], q[1]]; }), 1);
+        }
+        if (tzmin <= zlo) rasterTriZMax(floorZ, W, H, G(a), G(b), G(c), zlo);
+      }
+    };
+    for (const d of geo.disps || []) doTris(d.tris.tris, d.tris.tris.length / 9);
+    if (geo.kind === 'obj') {
+      const wm = waterMat != null ? geo.mats.indexOf(waterMat) : -1;
+      doTris(geo.tris, geo.tris.length / 9, wm >= 0 ? (t => geo.triMat[t] === wm) : null);
+    }
+    // water area
+    let hasWaterArea = false;
+    if (waterMat && geo.upMats[waterMat]) {
+      for (const f of geo.upMats[waterMat].faces) {
+        if (P.waterLevelZ != null && Math.abs(f.z - P.waterLevelZ) > 0.5) continue;
+        fillPolyCenters(water, W, H, f.poly.map(p => [(p[0] - g.x0) / g.cx, (g.y1 - p[1]) / g.cy]), 1);
+        hasWaterArea = true;
+      }
+    }
+    // patch small holes in floor raster (max of neighbours, 2 passes)
+    for (let pass = 0; pass < 2; pass++) {
+      const src = floorZ.slice();
+      for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+        const o = j * W + i; if (src[o] > -Infinity) continue;
+        let m = -Infinity, c = 0;
+        if (i > 0 && src[o - 1] > -Infinity) { m = Math.max(m, src[o - 1]); c++; }
+        if (i < W - 1 && src[o + 1] > -Infinity) { m = Math.max(m, src[o + 1]); c++; }
+        if (j > 0 && src[o - W] > -Infinity) { m = Math.max(m, src[o - W]); c++; }
+        if (j < H - 1 && src[o + W] > -Infinity) { m = Math.max(m, src[o + W]); c++; }
+        if (c >= 2) floorZ[o] = m;
+      }
+    }
+    return { geomSolid: solid, floorZ, water, hasWaterArea };
+  }
+
+  // brush-entity solid class defaults
+  function defaultClasses(geo) {
+    const s = new Set();
+    for (const c of Object.keys(geo.brushClassCount || {})) if (SOLID_CLASSES.has(c)) s.add(c);
+    s.add('worldspawn');
+    return s;
+  }
+
+  return { parseKV, prop, kids, loadVMF, loadOBJ, rasterize, waterLevels, suggestWater, defaultClasses, SOLID_CLASSES, polytope, buildDisp, hull2D, polyArea2D };
+})();
+if (typeof module !== 'undefined') module.exports = Geom;
+
+</script>
+<script>
+// ===== File writers: PNG, TGA, VTF (BGRA8888 / DXT5), ZIP, VMF patch (no DOM) =====
+const Exp = (() => {
+  'use strict';
+  const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(buf, crc = 0) { let c = (crc ^ 0xffffffff) >>> 0; for (let i = 0; i < buf.length; i++) c = CRC_T[(c ^ buf[i]) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+  function adler32(buf) { let a = 1, b = 0; for (let i = 0; i < buf.length; i++) { a = (a + buf[i]) % 65521; b = (b + a) % 65521; } return ((b << 16) | a) >>> 0; }
+  function concat(parts) { let n = 0; for (const p of parts) n += p.length; const out = new Uint8Array(n); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; } return out; }
+  const u32be = v => new Uint8Array([(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255]);
+  const ascii = s => new Uint8Array([...s].map(c => c.charCodeAt(0)));
+
+  // zlib stream; uses CompressionStream when present, else stored blocks
+  let deflateImpl = null;
+  async function zlib(data) {
+    if (deflateImpl) return deflateImpl(data);
+    if (typeof CompressionStream !== 'undefined') {
+      try {
+        const cs = new CompressionStream('deflate');
+        const out = new Response(new Blob([data]).stream().pipeThrough(cs)).arrayBuffer();
+        return new Uint8Array(await out);
+      } catch (e) { /* fall through */ }
+    }
+    const blocks = [new Uint8Array([0x78, 0x01])];
+    for (let i = 0; i < data.length || i === 0; i += 65535) {
+      const chunk = data.subarray(i, Math.min(i + 65535, data.length));
+      const last = i + 65535 >= data.length ? 1 : 0;
+      const L = chunk.length;
+      blocks.push(new Uint8Array([last, L & 255, L >> 8, (~L) & 255, ((~L) >> 8) & 255]), chunk);
+      if (data.length === 0) break;
+    }
+    const ad = adler32(data); blocks.push(u32be(ad));
+    return concat(blocks);
+  }
+
+  async function png(W, H, rgba, channels = 4) {
+    const stride = W * channels + 1;
+    const raw = new Uint8Array(stride * H);
+    for (let y = 0; y < H; y++) {
+      raw[y * stride] = 1; // Sub filter
+      const ro = y * stride + 1;
+      for (let x = 0; x < W; x++) for (let c = 0; c < channels; c++) {
+        const v = rgba[(y * W + x) * 4 + c];
+        const left = x > 0 ? rgba[(y * W + x - 1) * 4 + c] : 0;
+        raw[ro + x * channels + c] = (v - left) & 255;
+      }
+    }
+    const chunk = (type, data) => { const td = concat([ascii(type), data]); return concat([u32be(data.length), td, u32be(crc32(td))]); };
+    const ih = new Uint8Array(13); const dv = new DataView(ih.buffer);
+    dv.setUint32(0, W); dv.setUint32(4, H); ih[8] = 8; ih[9] = channels === 4 ? 6 : channels === 3 ? 2 : 0; ih[10] = 0; ih[11] = 0; ih[12] = 0;
+    return concat([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ih), chunk('IDAT', await zlib(raw)), chunk('IEND', new Uint8Array(0))]);
+  }
+
+  // 32-bit TGA, top-left origin
+  function tga(W, H, rgba) {
+    const out = new Uint8Array(18 + W * H * 4);
+    out[2] = 2; out[12] = W & 255; out[13] = W >> 8; out[14] = H & 255; out[15] = H >> 8; out[16] = 32; out[17] = 0x28;
+    for (let i = 0, o = 18; i < W * H; i++, o += 4) { out[o] = rgba[i * 4 + 2]; out[o + 1] = rgba[i * 4 + 1]; out[o + 2] = rgba[i * 4]; out[o + 3] = rgba[i * 4 + 3]; }
+    return out;
+  }
+
+  // ---------- DXT ----------
+  const to565 = (r, g, b) => ((Math.round(r * 31 / 255) << 11) | (Math.round(g * 63 / 255) << 5) | Math.round(b * 31 / 255));
+  const from565 = c => [((c >> 11) & 31) * 255 / 31, ((c >> 5) & 63) * 255 / 63, (c & 31) * 255 / 31];
+  function colorBlock(px, out, o, dxt1) { // px: 16*4 rgba
+    // bounding box with diagonal choice (van Waveren)
+    let mn = [255, 255, 255], mx = [0, 0, 0], mean = [0, 0, 0];
+    for (let i = 0; i < 16; i++) for (let c = 0; c < 3; c++) { const v = px[i * 4 + c]; if (v < mn[c]) mn[c] = v; if (v > mx[c]) mx[c] = v; mean[c] += v / 16; }
+    // choose diagonal: covariance with channel of largest range
+    const rng = [mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]];
+    const k = rng[0] >= rng[1] && rng[0] >= rng[2] ? 0 : rng[1] >= rng[2] ? 1 : 2;
+    for (let c = 0; c < 3; c++) {
+      if (c === k) continue;
+      let cov = 0; for (let i = 0; i < 16; i++) cov += (px[i * 4 + k] - mean[k]) * (px[i * 4 + c] - mean[c]);
+      if (cov < 0) { const t = mn[c]; mn[c] = mx[c]; mx[c] = t; }
+    }
+    // inset
+    const e0 = [0, 1, 2].map(c => mx[c] - (mx[c] - mn[c]) / 16), e1 = [0, 1, 2].map(c => mn[c] + (mx[c] - mn[c]) / 16);
+    let c0 = to565(...e0.map(v => Math.max(0, Math.min(255, v)))), c1 = to565(...e1.map(v => Math.max(0, Math.min(255, v))));
+    if (c0 < c1) { const t = c0; c0 = c1; c1 = t; }
+    let idx = 0;
+    if (c0 !== c1) {
+      const p0 = from565(c0), p1 = from565(c1);
+      const pal = [p0, p1, p0.map((v, i) => (2 * v + p1[i]) / 3), p0.map((v, i) => (v + 2 * p1[i]) / 3)];
+      for (let i = 15; i >= 0; i--) {
+        let best = 0, bd = Infinity;
+        for (let q = 0; q < 4; q++) { const d = (px[i * 4] - pal[q][0]) ** 2 + (px[i * 4 + 1] - pal[q][1]) ** 2 + (px[i * 4 + 2] - pal[q][2]) ** 2; if (d < bd) { bd = d; best = q; } }
+        idx = (idx << 2) | best;
+      }
+    }
+    out[o] = c0 & 255; out[o + 1] = c0 >> 8; out[o + 2] = c1 & 255; out[o + 3] = c1 >> 8;
+    out[o + 4] = idx & 255; out[o + 5] = (idx >>> 8) & 255; out[o + 6] = (idx >>> 16) & 255; out[o + 7] = (idx >>> 24) & 255;
+  }
+  function alphaBlock(px, out, o) {
+    let a0 = 0, a1 = 255;
+    for (let i = 0; i < 16; i++) { const a = px[i * 4 + 3]; if (a > a0) a0 = a; if (a < a1) a1 = a; }
+    out[o] = a0; out[o + 1] = a1;
+    let bits = 0n;
+    if (a0 !== a1) {
+      const pal = [a0, a1]; for (let q = 1; q <= 6; q++) pal.push(((7 - q) * a0 + q * a1) / 7);
+      for (let i = 0; i < 16; i++) {
+        const a = px[i * 4 + 3]; let best = 0, bd = Infinity;
+        for (let q = 0; q < 8; q++) { const d = Math.abs(a - pal[q]); if (d < bd) { bd = d; best = q; } }
+        bits |= BigInt(best) << BigInt(3 * i);
+      }
+    }
+    for (let b = 0; b < 6; b++) out[o + 2 + b] = Number((bits >> BigInt(8 * b)) & 255n);
+  }
+  function blockPixels(W, H, rgba, bx, by, px) {
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) {
+      const sx = Math.min(W - 1, bx * 4 + x), sy = Math.min(H - 1, by * 4 + y);
+      const s = (sy * W + sx) * 4, d = (y * 4 + x) * 4;
+      px[d] = rgba[s]; px[d + 1] = rgba[s + 1]; px[d + 2] = rgba[s + 2]; px[d + 3] = rgba[s + 3];
+    }
+  }
+  function dxt(W, H, rgba, kind) {
+    const bw = Math.max(1, Math.ceil(W / 4)), bh = Math.max(1, Math.ceil(H / 4));
+    const bs = kind === 5 ? 16 : 8;
+    const out = new Uint8Array(bw * bh * bs); const px = new Uint8Array(64);
+    for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++) {
+      blockPixels(W, H, rgba, bx, by, px);
+      const o = (by * bw + bx) * bs;
+      if (kind === 5) { alphaBlock(px, out, o); colorBlock(px, out, o + 8, false); }
+      else colorBlock(px, out, o, true);
+    }
+    return out;
+  }
+  function downscale(W, H, rgba, w, h) {
+    const out = new Uint8Array(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const x0 = Math.floor(x * W / w), x1 = Math.max(x0 + 1, Math.floor((x + 1) * W / w));
+      const y0 = Math.floor(y * H / h), y1 = Math.max(y0 + 1, Math.floor((y + 1) * H / h));
+      const s = [0, 0, 0, 0]; let n = 0;
+      for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) { const o = (yy * W + xx) * 4; for (let c = 0; c < 4; c++) s[c] += rgba[o + c]; n++; }
+      for (let c = 0; c < 4; c++) out[(y * w + x) * 4 + c] = Math.round(s[c] / n);
+    }
+    return out;
+  }
+
+  const VTF_FLAGS = { POINTSAMPLE: 0x1, TRILINEAR: 0x2, CLAMPS: 0x4, CLAMPT: 0x8, NOMIP: 0x100, NOLOD: 0x200, EIGHTBITALPHA: 0x2000 };
+  function vtf(W, H, rgba, opts = {}) {
+    const format = opts.format === 'DXT5' ? 15 : 12; // 12 = BGRA8888
+    let flags = VTF_FLAGS.NOMIP | VTF_FLAGS.NOLOD | VTF_FLAGS.EIGHTBITALPHA;
+    if (opts.clamp) flags |= VTF_FLAGS.CLAMPS | VTF_FLAGS.CLAMPT;
+    const lw = Math.min(16, W), lh = Math.min(16, H);
+    const low = dxt(lw, lh, downscale(W, H, rgba, lw, lh), 1);
+    let hi;
+    if (format === 12) {
+      hi = new Uint8Array(W * H * 4);
+      for (let i = 0; i < W * H; i++) { hi[i * 4] = rgba[i * 4 + 2]; hi[i * 4 + 1] = rgba[i * 4 + 1]; hi[i * 4 + 2] = rgba[i * 4]; hi[i * 4 + 3] = rgba[i * 4 + 3]; }
+    } else hi = dxt(W, H, rgba, 5);
+    const hdr = new Uint8Array(80); const dv = new DataView(hdr.buffer);
+    hdr.set(ascii('VTF\0'), 0);
+    dv.setUint32(4, 7, true); dv.setUint32(8, 2, true); dv.setUint32(12, 80, true);
+    dv.setUint16(16, W, true); dv.setUint16(18, H, true); dv.setUint32(20, flags, true);
+    dv.setUint16(24, 1, true); dv.setUint16(26, 0, true);
+    let r = 0, g = 0, b = 0; for (let i = 0; i < W * H; i++) { r += rgba[i * 4]; g += rgba[i * 4 + 1]; b += rgba[i * 4 + 2]; }
+    const lin = v => Math.pow(v / (W * H) / 255, 2.2);
+    dv.setFloat32(32, lin(r), true); dv.setFloat32(36, lin(g), true); dv.setFloat32(40, lin(b), true);
+    dv.setFloat32(48, 1, true);
+    dv.setUint32(52, format, true);
+    hdr[56] = 1; // mip count
+    dv.setUint32(57, 13, true); // low-res DXT1
+    hdr[61] = lw; hdr[62] = lh;
+    dv.setUint16(63, 1, true); // depth
+    return concat([hdr, low, hi]);
+  }
+
+  // ---------- ZIP (stored) ----------
+  function zip(files) { // [{name, data:Uint8Array}]
+    const enc = new TextEncoder(); const parts = []; const central = []; let off = 0;
+    const now = new Date();
+    const dtime = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xffff;
+    const ddate = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xffff;
+    for (const f of files) {
+      const name = enc.encode(f.name); const data = f.data; const crc = crc32(data);
+      const lh = new Uint8Array(30 + name.length); const dv = new DataView(lh.buffer);
+      dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true); dv.setUint16(6, 0x0800, true); dv.setUint16(8, 0, true);
+      dv.setUint16(10, dtime, true); dv.setUint16(12, ddate, true); dv.setUint32(14, crc, true);
+      dv.setUint32(18, data.length, true); dv.setUint32(22, data.length, true); dv.setUint16(26, name.length, true); dv.setUint16(28, 0, true);
+      lh.set(name, 30);
+      const ch = new Uint8Array(46 + name.length); const cv = new DataView(ch.buffer);
+      cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true); cv.setUint16(8, 0x0800, true); cv.setUint16(10, 0, true);
+      cv.setUint16(12, dtime, true); cv.setUint16(14, ddate, true); cv.setUint32(16, crc, true); cv.setUint32(20, data.length, true); cv.setUint32(24, data.length, true);
+      cv.setUint16(28, name.length, true); cv.setUint32(42, off, true); ch.set(name, 46);
+      parts.push(lh, data); central.push(ch); off += lh.length + data.length;
+    }
+    const cd = concat(central);
+    const end = new Uint8Array(22); const ev = new DataView(end.buffer);
+    ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, files.length, true); ev.setUint16(10, files.length, true);
+    ev.setUint32(12, cd.length, true); ev.setUint32(16, off, true);
+    return concat([...parts, cd, end]);
+  }
+
+  // ---------- Hammer alignment ----------
+  // Texture coords on a floor face (u axis [1 0 0], v axis [0 -1 0]):
+  //   u = (x/scaleX + shiftX) / mapW ,  v = (-y/scaleY + shiftY) / mapH
+  // We want u: 0 at xmin -> 1 at xmax, v: 0 at ymax (north, image top) -> 1 at ymin.
+  function alignment(b, mapW, mapH) {
+    const sx = (b.xmax - b.xmin) / mapW, sy = (b.ymax - b.ymin) / mapH;
+    return { scaleX: sx, scaleY: sy, shiftX: -b.xmin / sx, shiftY: b.ymax / sy };
+  }
+  // Grow bounds so the Hammer numbers come out clean: scale on a 1/step grid and integer shifts.
+  function snapBounds(b, mapW, mapH, step = 0.25) {
+    const fit = (lo, hi, M, flip) => {
+      const ext = hi - lo;
+      let s = Math.max(step, Math.ceil(ext / M / step - 1e-9) * step);
+      for (let tries = 0; tries < 400; tries++) {
+        const E = s * M;
+        if (!flip) { const a = Math.floor(lo / s + 1e-9) * s; if (a + E >= hi - 1e-6) return [a, a + E, s]; }
+        else { const t = Math.ceil(hi / s - 1e-9) * s; if (t - E <= lo + 1e-6) return [t - E, t, s]; }
+        s += step;
+      }
+      return [lo, hi, ext / M];
+    };
+    const [x0, x1, sx] = fit(b.xmin, b.xmax, mapW, false);
+    const [y0, y1, sy] = fit(b.ymin, b.ymax, mapH, true);
+    return { xmin: x0, xmax: x1, ymin: y0, ymax: y1, scaleX: sx, scaleY: sy };
+  }
+  const fmtNum = v => { const r = Math.round(v * 10000) / 10000; return (Object.is(r, -0) ? 0 : r).toString(); };
+
+  // Patch VMF: set material + world-aligned axes on given side nodes. sides: [{node}] from Geom; returns new text.
+  function patchVMF(text, sides, al, material) {
+    const edits = [];
+    for (const sd of sides) {
+      for (const p of sd.props) {
+        const k = p.k.toLowerCase();
+        if (k === 'uaxis') edits.push({ s: p.s, e: p.e, v: `[1 0 0 ${fmtNum(al.shiftX)}] ${fmtNum(al.scaleX)}` });
+        else if (k === 'vaxis') edits.push({ s: p.s, e: p.e, v: `[0 -1 0 ${fmtNum(al.shiftY)}] ${fmtNum(al.scaleY)}` });
+        else if (k === 'rotation') edits.push({ s: p.s, e: p.e, v: '0' });
+        else if (k === 'material' && material) edits.push({ s: p.s, e: p.e, v: material.toUpperCase() });
+      }
+    }
+    edits.sort((a, b) => b.s - a.s);
+    let out = text;
+    for (const e of edits) out = out.slice(0, e.s) + e.v + out.slice(e.e);
+    return out;
+  }
+
+  return { crc32, png, tga, vtf, dxt, zip, alignment, snapBounds, patchVMF, fmtNum, setDeflate: f => { deflateImpl = f; }, concat };
+})();
+if (typeof module !== 'undefined') module.exports = Exp;
+
+</script>
+<script>
+// ===== GPU fluid simulation (WebGL2) =====
+const Sim = (() => {
+  'use strict';
+  const HDR = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform ivec2 uSize; uniform int uClosed;
+out vec4 o;
+bool inside(ivec2 p){ return p.x>=0 && p.y>=0 && p.x<uSize.x && p.y<uSize.y; }
+`;
+  const VS = `#version 300 es
+in vec2 aPos; void main(){ gl_Position = vec4(aPos,0.,1.); }`;
+
+  const SOLID = `
+uniform sampler2D uObst;
+bool solid(ivec2 p){ if(!inside(p)) return uClosed==1; return texelFetch(uObst,p,0).r>0.5; }
+`;
+  const VELAT = `
+uniform sampler2D uVel;
+vec2 velAt(ivec2 p){ if(!inside(p)) return vec2(0); if(texelFetch(uObst,p,0).r>0.5) return vec2(0); return texelFetch(uVel,p,0).xy; }
+vec2 bilerpV(vec2 pos){ vec2 q=pos-0.5; ivec2 i0=ivec2(floor(q)); vec2 f=q-floor(q);
+  vec2 a=velAt(i0), b=velAt(i0+ivec2(1,0)), c=velAt(i0+ivec2(0,1)), d=velAt(i0+ivec2(1,1));
+  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
+`;
+  const FS = {
+    advect: HDR + SOLID + VELAT + `
+uniform sampler2D uFA, uFB; uniform float uDt, uDamp, uMaxV, uForce, uShallow;
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); if(solid(p)){o=vec4(0);return;}
+  vec2 x=vec2(p)+0.5; vec2 v=texelFetch(uVel,p,0).xy;
+  vec2 vm=bilerpV(x-0.5*uDt*v);
+  vec2 nv=bilerpV(x-uDt*vm);
+  vec4 fa=texelFetch(uFA,p,0); vec4 fb=texelFetch(uFB,p,0);
+  nv += uDt*fa.xy*uForce;
+  float drag = fb.x + texelFetch(uObst,p,0).b*uShallow + uDamp;
+  nv /= (1.0 + uDt*drag);
+  float l=length(nv); if(l>uMaxV) nv*=uMaxV/l;
+  o=vec4(nv,0,1); }`,
+    curl: HDR + SOLID + VELAT + `
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy);
+  float w = 0.5*((velAt(p+ivec2(1,0)).y-velAt(p-ivec2(1,0)).y) - (velAt(p+ivec2(0,1)).x-velAt(p-ivec2(0,1)).x));
+  o=vec4(w,0,0,1); }`,
+    confine: HDR + SOLID + `
+uniform sampler2D uVel, uCurl; uniform float uEps, uDt;
+float cw(ivec2 p){ p=clamp(p,ivec2(0),uSize-1); return abs(texelFetch(uCurl,p,0).r); }
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); vec2 v=texelFetch(uVel,p,0).xy; if(solid(p)){o=vec4(0);return;}
+  vec2 g=0.5*vec2(cw(p+ivec2(1,0))-cw(p-ivec2(1,0)), cw(p+ivec2(0,1))-cw(p-ivec2(0,1)));
+  vec2 N=g/(length(g)+1e-6); float w=texelFetch(uCurl,p,0).r;
+  v += uDt*uEps*vec2(N.y*w, -N.x*w);
+  o=vec4(v,0,1); }`,
+    divergence: HDR + SOLID + `
+uniform sampler2D uVel, uFA; uniform float uSrc;
+vec2 nb(ivec2 q, vec2 vc){ if(!inside(q)) return uClosed==1? vec2(0): vc; if(texelFetch(uObst,q,0).r>0.5) return vec2(0); return texelFetch(uVel,q,0).xy; }
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); if(solid(p)){o=vec4(0);return;}
+  vec2 vc=texelFetch(uVel,p,0).xy;
+  float d=0.5*((nb(p+ivec2(1,0),vc).x-nb(p-ivec2(1,0),vc).x)+(nb(p+ivec2(0,1),vc).y-nb(p-ivec2(0,1),vc).y));
+  o=vec4(d - texelFetch(uFA,p,0).z*uSrc,0,0,1); }`,
+    // Galerkin aggregation multigrid: each level stores the number of open water edges to each neighbour
+    // (wt: +x,-x,+y,-y), the open-boundary edge count (aux.r) and the number of fine water cells (aux.g).
+    mgBuild0W: HDR + `
+uniform sampler2D uM;
+const ivec2 NB[4] = ivec2[4](ivec2(1,0), ivec2(-1,0), ivec2(0,1), ivec2(0,-1));
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); vec4 w=vec4(0); if(texelFetch(uM,p,0).r>0.5){o=w;return;}
+  for(int k=0;k<4;k++){ ivec2 q=p+NB[k]; if(inside(q) && texelFetch(uM,q,0).r<0.5) w[k]=1.; }
+  o=w; }`,
+    mgBuild0A: HDR + `
+uniform sampler2D uM;
+const ivec2 NB[4] = ivec2[4](ivec2(1,0), ivec2(-1,0), ivec2(0,1), ivec2(0,-1));
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); if(texelFetch(uM,p,0).r>0.5){o=vec4(0);return;}
+  float D=0.; for(int k=0;k<4;k++){ ivec2 q=p+NB[k]; if(!inside(q) && uClosed==0) D+=1.; }
+  o=vec4(D,1.,0.,0.); }`,
+    mgCoarsenW: HDR + `
+uniform sampler2D uWf; uniform ivec2 uFine;
+vec4 wf(ivec2 q){ if(q.x>=uFine.x||q.y>=uFine.y) return vec4(0); return texelFetch(uWf,q,0); }
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); ivec2 b=2*p;
+  vec4 a=wf(b), c=wf(b+ivec2(1,0)), d=wf(b+ivec2(0,1)), e=wf(b+ivec2(1,1));
+  o=vec4(c.x+e.x, a.y+d.y, d.z+e.z, a.w+c.w); }`,
+    mgCoarsenA: HDR + `
+uniform sampler2D uAf; uniform ivec2 uFine;
+vec4 af(ivec2 q){ if(q.x>=uFine.x||q.y>=uFine.y) return vec4(0); return texelFetch(uAf,q,0); }
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); ivec2 b=2*p;
+  o=af(b)+af(b+ivec2(1,0))+af(b+ivec2(0,1))+af(b+ivec2(1,1)); }`,
+    mgSmooth: HDR + `
+uniform sampler2D uE, uB, uW, uA; uniform float uAlpha, uOmega;
+float ef(ivec2 q, float w){ return w>0. ? texelFetch(uE,q,0).r : 0.; }
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); vec4 A=texelFetch(uA,p,0); if(A.g<0.5){o=vec4(0);return;}
+  vec4 w=texelFetch(uW,p,0);
+  float s=w.x*ef(p+ivec2(1,0),w.x)+w.y*ef(p-ivec2(1,0),w.y)+w.z*ef(p+ivec2(0,1),w.z)+w.w*ef(p-ivec2(0,1),w.w);
+  float d=w.x+w.y+w.z+w.w+A.r+uAlpha*A.g; float e=texelFetch(uE,p,0).r;
+  o=vec4(mix(e,(s-texelFetch(uB,p,0).r)/max(d,1e-9),uOmega),0,0,1); }`,
+    mgResidual: HDR + `
+uniform sampler2D uE, uB, uW, uA; uniform float uAlpha;
+float ef(ivec2 q, float w){ return w>0. ? texelFetch(uE,q,0).r : 0.; }
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); vec4 A=texelFetch(uA,p,0); if(A.g<0.5){o=vec4(0);return;}
+  vec4 w=texelFetch(uW,p,0);
+  float s=w.x*ef(p+ivec2(1,0),w.x)+w.y*ef(p-ivec2(1,0),w.y)+w.z*ef(p+ivec2(0,1),w.z)+w.w*ef(p-ivec2(0,1),w.w);
+  float d=w.x+w.y+w.z+w.w+A.r+uAlpha*A.g; float e=texelFetch(uE,p,0).r;
+  o=vec4(texelFetch(uB,p,0).r-(s-d*e),0,0,1); }`,
+    mgRestrict: HDR + `
+uniform sampler2D uRes; uniform ivec2 uFine;
+float rf(ivec2 q){ if(q.x>=uFine.x||q.y>=uFine.y) return 0.; return texelFetch(uRes,q,0).r; }
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); ivec2 b=2*p;
+  o=vec4(rf(b)+rf(b+ivec2(1,0))+rf(b+ivec2(0,1))+rf(b+ivec2(1,1)),0,0,1); }`,
+    mgProlong: HDR + `
+uniform sampler2D uE, uEc, uA; uniform float uDamp;
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); if(texelFetch(uA,p,0).g<0.5){o=vec4(0);return;}
+  o=vec4(texelFetch(uE,p,0).r + uDamp*texelFetch(uEc,p/2,0).r,0,0,1); }`,
+    project: HDR + SOLID + `
+uniform sampler2D uVel, uP;
+float pn(ivec2 q, float pc){ if(!inside(q)) return uClosed==1? pc: 0.0; if(texelFetch(uObst,q,0).r>0.5) return pc; return texelFetch(uP,q,0).r; }
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); if(solid(p)){o=vec4(0);return;}
+  float pc=texelFetch(uP,p,0).r; vec2 v=texelFetch(uVel,p,0).xy;
+  v -= 0.5*vec2(pn(p+ivec2(1,0),pc)-pn(p-ivec2(1,0),pc), pn(p+ivec2(0,1),pc)-pn(p-ivec2(0,1),pc));
+  if(solid(p-ivec2(1,0)) && v.x<0.) v.x=0.; if(solid(p+ivec2(1,0)) && v.x>0.) v.x=0.;
+  if(solid(p-ivec2(0,1)) && v.y<0.) v.y=0.; if(solid(p+ivec2(0,1)) && v.y>0.) v.y=0.;
+  o=vec4(v,0,1); }`,
+    foam: HDR + SOLID + `
+uniform sampler2D uVel, uFoam, uFA, uCurl; uniform float uDt, uDecay, uImpact, uSpeedK, uTurbK, uVref, uInletK;
+float fAt(ivec2 q){ if(!inside(q)) return 0.; if(texelFetch(uObst,q,0).r>0.5) return 0.; return texelFetch(uFoam,q,0).r; }
+float bil(vec2 pos){ vec2 q=pos-0.5; ivec2 i0=ivec2(floor(q)); vec2 f=q-floor(q);
+  return mix(mix(fAt(i0),fAt(i0+ivec2(1,0)),f.x),mix(fAt(i0+ivec2(0,1)),fAt(i0+ivec2(1,1)),f.x),f.y); }
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy); if(solid(p)){o=vec4(0);return;}
+  vec2 v=texelFetch(uVel,p,0).xy; vec2 vn=v/uVref;
+  float f=bil(vec2(p)+0.5-uDt*v);
+  float imp=0.;
+  if(solid(p+ivec2(1,0))) imp+=max(vn.x,0.); if(solid(p-ivec2(1,0))) imp+=max(-vn.x,0.);
+  if(solid(p+ivec2(0,1))) imp+=max(vn.y,0.); if(solid(p-ivec2(0,1))) imp+=max(-vn.y,0.);
+  float sp=length(vn); float turb=abs(texelFetch(uCurl,p,0).r)/uVref;
+  float gen = texelFetch(uFA,p,0).w*uInletK + uImpact*imp + uSpeedK*max(sp-0.6,0.) + uTurbK*turb;
+  f = f*(1.0-uDecay) + gen*0.012;
+  o=vec4(clamp(f,0.,1.),0,0,1); }`,
+    average: HDR + `
+uniform sampler2D uAvg, uVel, uFoam, uP; uniform float uBeta, uLeak;
+void main(){ ivec2 p=ivec2(gl_FragCoord.xy);
+  vec4 a=texelFetch(uAvg,p,0);
+  vec3 cur=vec3(texelFetch(uVel,p,0).xy, texelFetch(uFoam,p,0).r);
+  // w: running sum of the per-step pressure corrections = the pressure that keeps the water moving (surface height proxy)
+  o = vec4(mix(a.xyz, cur, uBeta), a.w*(1.0-uLeak) + texelFetch(uP,p,0).r); }`,
+    copy: HDR + `uniform sampler2D uSrc; void main(){ o=texelFetch(uSrc,ivec2(gl_FragCoord.xy),0); }`,
+  };
+
+  const DISPLAY_VS = `#version 300 es
+in vec2 aPos; uniform vec4 uRect; uniform vec2 uCanvas; out vec2 vUV;
+void main(){ vUV = aPos*0.5+0.5; vec2 px = uRect.xy + vUV*uRect.zw; vec2 c = px/uCanvas*2.0-1.0; gl_Position=vec4(c.x,-c.y,0.,1.); }`;
+  const DISPLAY_FS = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+in vec2 vUV; out vec4 o;
+uniform sampler2D uAvg, uVel, uObst, uFoam, uNoise; uniform ivec2 uSize;
+uniform int uMode, uLive; uniform float uRs, uGs; uniform float uVref, uGain, uExpo, uTime, uPmin, uPmax, uFoamGain, uDark, uPreviewTile, uPreviewSpeed;
+uniform vec3 cLand, cOutside, cDeep, cShallow, cBlock, cOpen, cProp, cNofloor;
+vec4 avgAt(ivec2 p){ p=clamp(p,ivec2(0),uSize-1); return uLive==1? vec4(texelFetch(uVel,p,0).xy, texelFetch(uFoam,p,0).r, 0.) : texelFetch(uAvg,p,0); }
+vec4 avgBil(vec2 g){ vec2 q=g-0.5; ivec2 i=ivec2(floor(q)); vec2 f=q-floor(q);
+  return mix(mix(avgAt(i),avgAt(i+ivec2(1,0)),f.x),mix(avgAt(i+ivec2(0,1)),avgAt(i+ivec2(1,1)),f.x),f.y); }
+vec3 heat(float t){ t=clamp(t,0.,1.); return clamp(vec3(1.5*t-0.1, 1.6*t*t, 0.35+0.9*t-1.2*t*t)+vec3(0.,0.,0.0),0.,1.); }
+vec2 flowOf(vec4 a){ vec2 f=a.xy/uVref*uGain; float l=length(f); if(l<1e-6) return vec2(0); return f/l*min(1.0, pow(l, uExpo)); }
+void main(){
+  vec2 g = vUV*vec2(uSize);
+  ivec2 p = ivec2(floor(g)); p=clamp(p,ivec2(0),uSize-1);
+  vec4 ob = texelFetch(uObst,p,0);
+  int code = int(ob.a+0.5);
+  float depth = ob.g;
+  vec3 water = mix(cShallow, cDeep, clamp(depth,0.,1.));
+  vec3 base;
+  if(code==1) base=cLand; else if(code==2) base=cOutside; else if(code==3) base=cBlock; else if(code==5) base=cProp; else if(code==6) base=mix(cLand,cNofloor,0.18); else base=water;
+  bool isSolid = ob.r>0.5;
+  vec3 col = base;
+  if(uMode==1){ // flowmap colours
+    if(!isSolid){ vec2 f=flowOf(avgBil(g)); col=vec3(0.5+0.5*f.x*uRs, 0.5+0.5*f.y*uGs, 0.); }
+    else col = base*0.55;
+  } else if(uMode==2){ // speed
+    if(!isSolid){ float s=length(avgBil(g).xy)/uVref; col=heat(s); } else col=base*0.6;
+  } else if(uMode==3){ // foam
+    if(!isSolid){ float f=clamp(avgBil(g).z*uFoamGain,0.,1.); col=mix(water*0.5, vec3(1.), f); } else col=base*0.6;
+  } else if(uMode==4){ // height
+    if(!isSolid){ float h=(avgAt(p).w-uPmin)/max(uPmax-uPmin,1e-6); col=vec3(h); } else col=base*0.6;
+  } else if(uMode==5){ // animated water
+    if(!isSolid){
+      vec4 a=avgBil(g); vec2 f=flowOf(a);
+      float t=uTime*uPreviewSpeed; float ph0=fract(t), ph1=fract(t+0.5);
+      float w0=1.0-abs(1.0-2.0*ph0);
+      vec2 b=g/uPreviewTile;
+      float k=0.35;
+      vec2 uv0=b-f*ph0*k, uv1=b-f*ph1*k+vec2(0.37,0.11);
+      vec4 n0=texture(uNoise,uv0), n1=texture(uNoise,uv1);
+      vec4 n=n0*w0+n1*(1.0-w0);
+      float rip = n.r*0.6+n.g*0.4;
+      vec3 c = water*(0.75+0.5*rip) + vec3(0.9,0.97,1.0)*pow(max(rip-0.55,0.)*2.2,2.0)*0.6;
+      float fo = clamp(a.z*uFoamGain,0.,1.);
+      float streak = smoothstep(0.45,0.8, n.b*0.7+fo*0.6);
+      c = mix(c, vec3(0.94,0.97,0.98), fo*streak);
+      col=c;
+    } else col=base;
+  }
+  o=vec4(col*(uDark>0.5?1.0:1.0),1.0);
+}`;
+
+  class FluidSim {
+    constructor(gl) {
+      this.gl = gl;
+      if (!gl.getExtension('EXT_color_buffer_float')) throw new Error('This browser can\'t render to float textures (EXT_color_buffer_float missing).');
+      gl.getExtension('OES_texture_float_linear');
+      const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+      this.vao = gl.createVertexArray(); gl.bindVertexArray(this.vao);
+      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      this.progs = {};
+      for (const k in FS) this.progs[k] = this.program(VS, FS[k]);
+      this.display = this.program(DISPLAY_VS, DISPLAY_FS);
+      this.noise = this.makeNoise();
+      this.W = 0; this.H = 0; this.step = 0;
+    }
+    program(vs, fs) {
+      const gl = this.gl;
+      const mk = (t, s) => { const sh = gl.createShader(t); gl.shaderSource(sh, s); gl.compileShader(sh); if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh) + '\n' + s.split('\n').map((l, i) => (i + 1) + ': ' + l).join('\n')); return sh; };
+      const p = gl.createProgram(); gl.attachShader(p, mk(gl.VERTEX_SHADER, vs)); gl.attachShader(p, mk(gl.FRAGMENT_SHADER, fs));
+      gl.bindAttribLocation(p, 0, 'aPos'); gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+      const u = {}; const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+      for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); u[info.name] = gl.getUniformLocation(p, info.name); }
+      return { p, u };
+    }
+    tex(W, H, data) {
+      const gl = this.gl; const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, W, H, 0, gl.RGBA, gl.FLOAT, data || null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      const st = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      if (st !== gl.FRAMEBUFFER_COMPLETE) throw new Error('Float framebuffer not supported (' + st + ')');
+      return { t, fb, W, H };
+    }
+    makeNoise() {
+      const gl = this.gl, N = 256; const d = new Uint8Array(N * N * 4);
+      // tileable value noise, 3 octave sets
+      const lattice = (s, seed) => { const g = new Float32Array(s * s); let x = seed; for (let i = 0; i < s * s; i++) { x = (x * 1103515245 + 12345) & 0x7fffffff; g[i] = x / 0x7fffffff; } return g; };
+      const sample = (g, s, u, v) => { const x = u * s, y = v * s; const i = Math.floor(x), j = Math.floor(y); const fx = x - i, fy = y - j; const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+        const at = (a, b) => g[((b % s + s) % s) * s + ((a % s + s) % s)];
+        return (at(i, j) * (1 - sx) + at(i + 1, j) * sx) * (1 - sy) + (at(i, j + 1) * (1 - sx) + at(i + 1, j + 1) * sx) * sy; };
+      const L = [lattice(8, 7), lattice(16, 11), lattice(32, 13), lattice(64, 17), lattice(12, 23), lattice(24, 29)];
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+        const u = x / N, v = y / N;
+        const a = 0.5 * sample(L[0], 8, u, v) + 0.3 * sample(L[1], 16, u, v) + 0.2 * sample(L[2], 32, u, v);
+        const b = 0.6 * sample(L[2], 32, u, v) + 0.4 * sample(L[3], 64, u, v);
+        const c = 0.6 * sample(L[4], 12, u, v) + 0.4 * sample(L[5], 24, u, v);
+        const rid = 1 - Math.abs(2 * a - 1);
+        const o = (y * N + x) * 4; d[o] = rid * 255; d[o + 1] = b * 255; d[o + 2] = c * 255; d[o + 3] = 255;
+      }
+      const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, d);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+      return t;
+    }
+    resize(W, H) {
+      const gl = this.gl;
+      const del = o => { if (o) { gl.deleteTexture(o.t); gl.deleteFramebuffer(o.fb); } };
+      if (this.T) for (const k in this.T) { const v = this.T[k]; if (Array.isArray(v)) v.forEach(del); else del(v); }
+      if (this.levels) for (let l = 1; l < this.levels.length; l++) { const L = this.levels[l]; L.e.forEach(del); del(L.b); del(L.res); }
+      if (this.levels) for (const L of this.levels) { del(L.wt); del(L.aux); }
+      if (this.levels) del(this.levels[0].res);
+      this.W = W; this.H = H;
+      this.T = {
+        vel: [this.tex(W, H), this.tex(W, H)], prs: [this.tex(W, H), this.tex(W, H)], foam: [this.tex(W, H), this.tex(W, H)],
+        avg: [this.tex(W, H), this.tex(W, H)], div: this.tex(W, H), curl: this.tex(W, H),
+        obst: this.tex(W, H), fa: this.tex(W, H), fb: this.tex(W, H),
+      };
+      // multigrid hierarchy for the pressure solve; level 0 shares the simulation textures
+      this.levels = [{ W, H, e: this.T.prs, b: this.T.div, res: this.tex(W, H), wt: this.tex(W, H), aux: this.tex(W, H) }];
+      let w = W, h = H;
+      while (Math.max(w, h) > 8 && Math.min(w, h) > 2) {
+        w = Math.ceil(w / 2); h = Math.ceil(h / 2);
+        this.levels.push({ W: w, H: h, e: [this.tex(w, h), this.tex(w, h)], b: this.tex(w, h), res: this.tex(w, h), wt: this.tex(w, h), aux: this.tex(w, h) });
+      }
+      this.builtClosed = null;
+      this.reset();
+    }
+    upload(target, data) {
+      const gl = this.gl; gl.bindTexture(gl.TEXTURE_2D, this.T[target].t); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, this.W, this.H, gl.RGBA, gl.FLOAT, data);
+      if (target === 'obst') this.buildMasks();
+    }
+    buildMasks() {
+      const L0 = this.levels[0];
+      this.pass('mgBuild0W', L0.wt, {}, { uM: this.T.obst });
+      this.pass('mgBuild0A', L0.aux, {}, { uM: this.T.obst });
+      for (let l = 1; l < this.levels.length; l++) {
+        const F = this.levels[l - 1], C = this.levels[l];
+        this.pass('mgCoarsenW', C.wt, { uFine: [F.W, F.H] }, { uWf: F.wt });
+        this.pass('mgCoarsenA', C.aux, { uFine: [F.W, F.H] }, { uAf: F.aux });
+      }
+      this.builtClosed = this.closed;
+    }
+    smooth(l, n, omega, alpha) {
+      const L = this.levels[l];
+      for (let k = 0; k < n; k++) { this.pass('mgSmooth', L.e[1], { uAlpha: alpha, uOmega: omega }, { uE: L.e[0], uB: L.b, uW: L.wt, uA: L.aux }); L.e.reverse(); }
+    }
+    vcycle(l, alpha) {
+      const L = this.levels[l];
+      if (l === this.levels.length - 1) { this.smooth(l, 12, 1.0, alpha); return; }
+      this.smooth(l, 2, 0.8, alpha);
+      this.pass('mgResidual', L.res, { uAlpha: alpha }, { uE: L.e[0], uB: L.b, uW: L.wt, uA: L.aux });
+      const C = this.levels[l + 1];
+      this.pass('mgRestrict', C.b, { uFine: [L.W, L.H] }, { uRes: L.res });
+      this.clear(C.e[0]);
+      this.vcycle(l + 1, alpha);
+      this.pass('mgProlong', L.e[1], { uDamp: 1.5 }, { uE: L.e[0], uEc: C.e[0], uA: L.aux }); L.e.reverse();
+      this.smooth(l, 2, 0.8, alpha);
+    }
+    clear(o) { const gl = this.gl; gl.bindFramebuffer(gl.FRAMEBUFFER, o.fb); gl.viewport(0, 0, o.W, o.H); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); }
+    reset() { for (const k of ['vel', 'prs', 'foam', 'avg']) this.T[k].forEach(o => this.clear(o)); this.clear(this.T.div); this.clear(this.T.curl); this.step = 0; this.avgSteps = 0; }
+    resetAverage() { this.T.avg.forEach(o => this.clear(o)); this.avgSteps = 0; }
+    pass(name, target, uniforms, textures) {
+      const gl = this.gl; const pr = this.progs[name];
+      gl.useProgram(pr.p); gl.bindFramebuffer(gl.FRAMEBUFFER, target.fb); gl.viewport(0, 0, target.W, target.H);
+      gl.uniform2i(pr.u.uSize, target.W, target.H);
+      if (pr.u.uClosed) gl.uniform1i(pr.u.uClosed, this.closed ? 1 : 0);
+      let unit = 0;
+      for (const k in textures) { if (!pr.u[k]) continue; gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, textures[k].t); gl.uniform1i(pr.u[k], unit); unit++; }
+      for (const k in uniforms) { if (pr.u[k] == null) continue; const v = uniforms[k]; if (typeof v === 'number') gl.uniform1f(pr.u[k], v); else if (Array.isArray(v)) gl.uniform2i(pr.u[k], v[0], v[1]); }
+      gl.bindVertexArray(this.vao); gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+    // P: params
+    run(steps, P) {
+      const T = this.T; this.closed = P.closed; if (this.builtClosed !== this.closed) this.buildMasks();
+      for (let s = 0; s < steps; s++) {
+        this.pass('advect', T.vel[1], { uDt: P.dt, uDamp: P.damp, uMaxV: P.maxV, uForce: 1, uShallow: P.shallow }, { uVel: T.vel[0], uObst: T.obst, uFA: T.fa, uFB: T.fb });
+        T.vel.reverse();
+        this.pass('curl', T.curl, {}, { uVel: T.vel[0], uObst: T.obst });
+        if (P.swirl > 0) {
+          this.pass('confine', T.vel[1], { uEps: P.swirl, uDt: P.dt }, { uVel: T.vel[0], uCurl: T.curl, uObst: T.obst });
+          T.vel.reverse();
+        }
+        this.pass('divergence', T.div, { uSrc: 1 }, { uVel: T.vel[0], uObst: T.obst, uFA: T.fa });
+        this.clear(T.prs[0]); // fresh solve every step (a warm start would re-apply the old pressure)
+        for (let k = 0; k < P.cycles; k++) this.vcycle(0, P.alpha);
+        this.pass('project', T.vel[1], {}, { uVel: T.vel[0], uP: T.prs[0], uObst: T.obst });
+        T.vel.reverse();
+        this.pass('foam', T.foam[1], { uDt: P.dt, uDecay: P.foamDecay, uImpact: P.foamImpact, uSpeedK: P.foamSpeed, uTurbK: P.foamTurb, uVref: Math.max(P.vref, 1e-4), uInletK: P.foamInlet }, { uVel: T.vel[0], uFoam: T.foam[0], uFA: T.fa, uCurl: T.curl, uObst: T.obst });
+        T.foam.reverse();
+        // averaging: faster at start so the preview fills in quickly
+        this.avgSteps = (this.avgSteps || 0) + 1;
+        const beta = Math.max(P.beta, 1 / this.avgSteps);
+        this.pass('average', T.avg[1], { uBeta: beta, uLeak: 0.004 }, { uAvg: T.avg[0], uVel: T.vel[0], uFoam: T.foam[0], uP: T.prs[0] });
+        T.avg.reverse();
+        this.step++;
+      }
+    }
+    read(name) {
+      const gl = this.gl; const o = Array.isArray(this.T[name]) ? this.T[name][0] : this.T[name];
+      gl.bindFramebuffer(gl.FRAMEBUFFER, o.fb);
+      const out = new Float32Array(this.W * this.H * 4);
+      gl.readPixels(0, 0, this.W, this.H, gl.RGBA, gl.FLOAT, out);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      return out;
+    }
+    draw(canvasW, canvasH, rect, D) {
+      const gl = this.gl, pr = this.display;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvasW, canvasH);
+      gl.clearColor(D.bg[0], D.bg[1], D.bg[2], 1); gl.clear(gl.COLOR_BUFFER_BIT);
+      if (!this.W) return;
+      gl.useProgram(pr.p);
+      gl.uniform4f(pr.u.uRect, rect[0], rect[1], rect[2], rect[3]); gl.uniform2f(pr.u.uCanvas, canvasW, canvasH);
+      gl.uniform2i(pr.u.uSize, this.W, this.H);
+      const tx = { uAvg: this.T.avg[0], uVel: this.T.vel[0], uObst: this.T.obst, uFoam: this.T.foam[0] };
+      let unit = 0;
+      for (const k in tx) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tx[k].t); gl.uniform1i(pr.u[k], unit); unit++; }
+      gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, this.noise); gl.uniform1i(pr.u.uNoise, unit);
+      gl.uniform1i(pr.u.uMode, D.mode); gl.uniform1i(pr.u.uLive, D.live ? 1 : 0); gl.uniform1f(pr.u.uRs, D.rs); gl.uniform1f(pr.u.uGs, D.gs);
+      for (const k of ['uVref', 'uGain', 'uExpo', 'uTime', 'uPmin', 'uPmax', 'uFoamGain', 'uDark', 'uPreviewTile', 'uPreviewSpeed']) gl.uniform1f(pr.u[k], D[k.slice(1)]);
+      for (const k of ['cLand', 'cOutside', 'cDeep', 'cShallow', 'cBlock', 'cOpen', 'cProp', 'cNofloor']) if (pr.u[k]) gl.uniform3fv(pr.u[k], D.colors[k]);
+      gl.bindVertexArray(this.vao); gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+  }
+  return { FluidSim };
+})();
+
+</script>
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const fmt = Exp.fmtNum;
+const APP_VERSION = 2;
+
+// ---------------- state ----------------
+const FIELD_TYPES = {
+  inlet:   { name: 'Inlet',   key: 'I', color: '--c-inlet',  desc: 'Water enters here' },
+  outlet:  { name: 'Outlet',  key: 'O', color: '--c-outlet', desc: 'Water drains here' },
+  push:    { name: 'Push',    key: 'P', color: '--c-push',   desc: 'Pushes water one way' },
+  spinner: { name: 'Spinner', key: 'S', color: '--c-spin',   desc: 'Swirls water round' },
+  calm:    { name: 'Calm',    key: 'C', color: '--c-calm',   desc: 'Slows water down' },
+};
+const S = {
+  mapName: 'demo_river', sourceName: 'Built-in demo river', sourceKind: 'demo', fileName: '',
+  waterMat: null, waterLevelZ: null, waterZ: 0, bandLo: 2, bandHi: 64,
+  bounds: null, snap: true, mapW: 512, mapH: 512, res: 384,
+  classes: null, edges: 'closed', outsideSolid: true, noFloorSolid: true,
+  propRadius: 32, propBlocks: {},
+  fields: [], nextId: 1,
+  sim: { flow: 1, damp: 0.006, shallow: 0.2, shallowDepth: 40, swirl: 0.12, avgSteps: 1100, spf: 8, cycles: 2, balance: true,
+         foamImpact: 1.2, foamSpeed: 0.8, foamTurb: 0.8, foamFade: 125, foamInlet: 1 },
+  exp: { size: 512, gain: 1, even: 30, blur: 1, flipGreen: false, flipRed: false, foam: true, foamGain: 1, shore: 0.2, fmt: 'BGRA8888', clamp: false, matPath: '', patch: true, patchMat: '' },
+  view: { mode: 1, arrows: true, live: false },
+  ui: { paintShape: 'brush', zoneShape: 'circle' },
+};
+let geo = null;        // loaded geometry
+let base = null;       // { geomSolid, floorZ, water, hasWaterArea }
+let grid = null;       // { W,H,x0,y1,cx,cy,b }
+let paint = null;      // Uint8Array per cell: 0 none, 1 block, 2 open
+let obst = null;       // Float32Array RGBA
+let solidMask = null;  // Uint8Array
+let depthArr = null;   // Float32Array depth below water (NaN = none)
+let sim = null, gl = null;
+let running = true, tool = 'select', selected = null;
+let stats = { vref: 0.3, pmin: 0, pmax: 1, change: 1, lastAvg: null, avg: null, at: 0 };
+let undo = [], redo = [];
+let brushR = 96;
+let noFloorAuto = false;
+
+// ---------------- helpers ----------------
+function toast(msg, ms = 2600) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, ms); }
+function busy(on, text) { $('#busy').hidden = !on; if (text) $('#busyText').textContent = text; }
+const yieldUI = () => new Promise(r => setTimeout(r, 30));
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function hexToRgb(h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; }
+function rle(u8) { const out = []; let i = 0; while (i < u8.length) { const v = u8[i]; let n = 1; while (i + n < u8.length && u8[i + n] === v && n < 255) n++; out.push(v, n); i += n; } return b64(new Uint8Array(out)); }
+function unrle(s, N) { const d = unb64(s); const out = new Uint8Array(N); let o = 0; for (let i = 0; i + 1 < d.length; i += 2) { out.fill(d[i], o, o + d[i + 1]); o += d[i + 1]; } return out; }
+function b64(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+function unb64(s) { const b = atob(s); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+function bytesToStr(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return s; }
+function strToBytes(s) { const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; }
+const safeName = s => (s || 'map').replace(/\.[^.]+$/, '').replace(/[^\w.-]+/g, '_').toLowerCase();
+
+// downloads: claude capability when framed, plain link when opened as a file
+const dlP = (window.claude && typeof window.claude.use === 'function') ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+async function saveFile(name, bytes) {
+  const d = await dlP;
+  if (d) {
+    try { await d.save({ filename: name, data: new Blob([bytes]) }); toast('Saved ' + name); }
+    catch (e) { toast(e && e.code === 'declined' ? 'Download cancelled' : 'Could not save ' + name + (e && e.message ? ': ' + e.message : '')); }
+    return;
+  }
+  if (window.claude && typeof window.claude.use === 'function') { toast('Downloads are not available in this view. Use the offline copy of the tool.'); return; }
+  const url = URL.createObjectURL(new Blob([bytes])); const a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+  toast('Saved ' + name);
+}
+async function copyText(t, what) {
+  try { await navigator.clipboard.writeText(t); toast(what + ' copied'); }
+  catch (e) { const ta = $('#vmtOut'); toast('Copy is blocked here. Select the text and copy it by hand.'); }
+}
+
+// ---------------- grid / bounds ----------------
+function rawWaterBounds() {
+  if (geo && S.waterMat && geo.upMats[S.waterMat]) {
+    let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+    for (const f of geo.upMats[S.waterMat].faces) {
+      if (S.waterLevelZ != null && Math.abs(f.z - S.waterLevelZ) > 0.5) continue;
+      for (const p of f.poly) { xmin = Math.min(xmin, p[0]); xmax = Math.max(xmax, p[0]); ymin = Math.min(ymin, p[1]); ymax = Math.max(ymax, p[1]); }
+    }
+    if (isFinite(xmin)) return { xmin, xmax, ymin, ymax };
+  }
+  if (geo) { const w = geo.worldBounds; if (isFinite(w.xmin)) return { xmin: w.xmin, xmax: w.xmax, ymin: w.ymin, ymax: w.ymax }; }
+  return { xmin: -2048, xmax: 2048, ymin: -1024, ymax: 1024 };
+}
+function computeGrid() {
+  let b = S.bounds ? { ...S.bounds } : rawWaterBounds();
+  if (b.xmax - b.xmin < 16) b.xmax = b.xmin + 16; if (b.ymax - b.ymin < 16) b.ymax = b.ymin + 16;
+  if (S.snap) { const s = Exp.snapBounds(b, S.mapW, S.mapH); b = { xmin: s.xmin, xmax: s.xmax, ymin: s.ymin, ymax: s.ymax }; }
+  const ex = b.xmax - b.xmin, ey = b.ymax - b.ymin;
+  const cs = Math.max(ex, ey) / S.res;
+  const W = Math.max(8, Math.round(ex / cs)), H = Math.max(8, Math.round(ey / cs));
+  return { W, H, x0: b.xmin, y1: b.ymax, cx: ex / W, cy: ey / H, b };
+}
+const w2g = (x, y) => [(x - grid.x0) / grid.cx, (grid.y1 - y) / grid.cy];
+const g2w = (gx, gy) => [grid.x0 + gx * grid.cx, grid.y1 - gy * grid.cy];
+
+// ---------------- rebuild pipeline ----------------
+function rasterNow() {
+  const old = grid, oldPaint = paint;
+  grid = computeGrid();
+  const N = grid.W * grid.H;
+  if (geo && (geo.kind === 'vmf' || geo.kind === 'obj')) {
+    base = Geom.rasterize(geo, { grid, waterZ: S.waterZ, bandLo: S.bandLo, bandHi: S.bandHi, classes: S.classes || Geom.defaultClasses(geo), waterMat: S.waterMat, waterLevelZ: S.waterLevelZ });
+  } else if (base && old && (old.W !== grid.W || old.H !== grid.H || old.x0 !== grid.x0 || old.y1 !== grid.y1)) {
+    base = resampleBase(base, old, grid);
+  }
+  // paint follows the world, not the grid
+  paint = new Uint8Array(N);
+  if (oldPaint && old) {
+    for (let j = 0; j < grid.H; j++) for (let i = 0; i < grid.W; i++) {
+      const [x, y] = g2w(i + .5, j + .5);
+      const oi = Math.floor((x - old.x0) / old.cx), oj = Math.floor((old.y1 - y) / old.cy);
+      if (oi >= 0 && oj >= 0 && oi < old.W && oj < old.H) paint[j * grid.W + i] = oldPaint[oj * old.W + oi];
+    }
+  }
+  if (sim && (sim.W !== grid.W || sim.H !== grid.H)) sim.resize(grid.W, grid.H);
+  compose(); buildFields();
+  if (sim) { sim.reset(); stats.change = 1; stats.lastAvg = null; }
+  syncMapUI(); updateExportInfo(); fitView(); updateHint();
+}
+function resampleBase(b, from, to) {
+  const N = to.W * to.H; const gs = new Uint8Array(N), wa = new Uint8Array(N), fz = new Float32Array(N).fill(-Infinity);
+  for (let j = 0; j < to.H; j++) for (let i = 0; i < to.W; i++) {
+    const x = to.x0 + (i + .5) * to.cx, y = to.y1 - (j + .5) * to.cy;
+    const oi = Math.floor((x - from.x0) / from.cx), oj = Math.floor((from.y1 - y) / from.cy);
+    const k = j * to.W + i;
+    if (oi >= 0 && oj >= 0 && oi < from.W && oj < from.H) { const o = oj * from.W + oi; gs[k] = b.geomSolid[o]; wa[k] = b.water[o]; fz[k] = b.floorZ[o]; }
+    else gs[k] = 1;
+  }
+  return { geomSolid: gs, water: wa, floorZ: fz, hasWaterArea: b.hasWaterArea };
+}
+function compose() {
+  const W = grid.W, H = grid.H, N = W * H;
+  obst = new Float32Array(N * 4); solidMask = new Uint8Array(N); depthArr = new Float32Array(N);
+  // auto-disable "no floor = land" when almost nothing has a floor (e.g. OBJ without ground)
+  let wc = 0, nf = 0;
+  for (let k = 0; k < N; k++) { if (base.geomSolid[k]) continue; if (base.hasWaterArea && !base.water[k]) continue; wc++; if (!(base.floorZ[k] > -Infinity)) nf++; }
+  noFloorAuto = wc > 0 && (wc - nf) / wc < 0.03; // geometry has (almost) no floor below the water at all
+  const useNoFloor = S.noFloorSolid && !noFloorAuto;
+  const propMask = new Uint8Array(N);
+  if (geo && geo.props) for (const p of geo.props) {
+    if (!S.propBlocks[p.id]) continue;
+    const [gx, gy] = w2g(p.x, p.y); const r = S.propRadius / grid.cx;
+    for (let j = Math.max(0, Math.floor(gy - r)); j <= Math.min(H - 1, Math.ceil(gy + r)); j++)
+      for (let i = Math.max(0, Math.floor(gx - r)); i <= Math.min(W - 1, Math.ceil(gx + r)); i++)
+        if ((i + .5 - gx) ** 2 + (j + .5 - gy) ** 2 <= r * r) propMask[j * W + i] = 1;
+  }
+  const sd = Math.max(1, S.sim.shallowDepth);
+  const ds = []; for (let k = 0; k < N; k += 7) { const fz = base.floorZ[k]; if (fz > -Infinity && !base.geomSolid[k]) ds.push(S.waterZ - fz); }
+  ds.sort((x, y) => x - y); const dref = Math.max(16, ds.length ? ds[Math.floor(ds.length * 0.97)] : 256);
+  for (let k = 0; k < N; k++) {
+    const fz = base.floorZ[k]; const hasFloor = fz > -Infinity;
+    const depth = hasFloor ? S.waterZ - fz : NaN; depthArr[k] = depth;
+    let solid = 0, code = 0;
+    if (base.geomSolid[k]) { solid = 1; code = 1; }
+    else if (base.hasWaterArea && !base.water[k] && S.outsideSolid) { solid = 1; code = 2; }
+    else if (!hasFloor && useNoFloor) { solid = 1; code = 6; }
+    if (propMask[k]) { solid = 1; code = 5; }
+    if (paint[k] === 2) { solid = 0; code = 4; }
+    else if (paint[k] === 1) { solid = 1; code = 3; }
+    solidMask[k] = solid;
+    const dn = hasFloor ? clamp(depth / dref, 0, 1) : 0.6;
+    const sh = (!solid && hasFloor) ? clamp(1 - depth / sd, 0, 1) : 0;
+    obst[k * 4] = solid; obst[k * 4 + 1] = dn; obst[k * 4 + 2] = sh; obst[k * 4 + 3] = code;
+  }
+  if (sim) sim.upload('obst', obst);
+}
+const isBox = f => f.shape === 'box' && (f.type === 'push' || f.type === 'calm');
+function fieldWeights(f, cb) { // cb(k, w, dx, dy, d) in grid units
+  const [gx, gy] = w2g(f.x, f.y); const r = Math.max(0.75, f.r / grid.cx); const soft = clamp(f.soft, 0.02, 1);
+  const W = grid.W, H = grid.H;
+  if (isBox(f)) {
+    const an = f.a * Math.PI / 180, ux = Math.cos(an), uy = -Math.sin(an), vx = -uy, vy = ux;
+    const hl = Math.max(0.75, f.len / 2 / grid.cx), hw = Math.max(0.75, f.wid / 2 / grid.cx);
+    const sd = Math.max(0.5, soft * Math.min(hl, hw)); const R = Math.hypot(hl, hw);
+    for (let j = Math.max(0, Math.floor(gy - R)); j <= Math.min(H - 1, Math.ceil(gy + R)); j++)
+      for (let i = Math.max(0, Math.floor(gx - R)); i <= Math.min(W - 1, Math.ceil(gx + R)); i++) {
+        const dx = i + .5 - gx, dy = j + .5 - gy; const u = dx * ux + dy * uy, v = dx * vx + dy * vy;
+        const du = Math.abs(u) - hl, dv = Math.abs(v) - hw; if (du > 0 || dv > 0) continue;
+        const k = j * W + i; if (solidMask[k]) continue;
+        const w = (1 - smooth(-sd, 0, du)) * (1 - smooth(-sd, 0, dv));
+        if (w > 0) cb(k, w, dx, dy, Math.hypot(dx, dy), R);
+      }
+    return;
+  }
+  for (let j = Math.max(0, Math.floor(gy - r)); j <= Math.min(H - 1, Math.ceil(gy + r)); j++)
+    for (let i = Math.max(0, Math.floor(gx - r)); i <= Math.min(W - 1, Math.ceil(gx + r)); i++) {
+      const dx = i + .5 - gx, dy = j + .5 - gy, d = Math.hypot(dx, dy);
+      if (d > r) continue; const k = j * W + i; if (solidMask[k]) continue;
+      const w = 1 - smooth(r * (1 - soft), r, d);
+      if (w > 0) cb(k, w, dx, dy, d, r);
+    }
+}
+function buildFields() {
+  const N = grid.W * grid.H; const fa = new Float32Array(N * 4), fb = new Float32Array(N * 4);
+  const Q = 0.06 * Math.max(grid.W, grid.H) * S.sim.flow; const F = 0.004 * S.sim.flow;
+  let inflow = 0, outS = 0;
+  for (const f of S.fields) { if (f.type === 'inlet') inflow += f.s * Q; if (f.type === 'outlet') outS += f.s; }
+  for (const f of S.fields) {
+    const ang = f.a * Math.PI / 180; const dir = [Math.cos(ang), -Math.sin(ang)]; // angle in world (CCW from +X), grid y is down
+    if (f.type === 'inlet' || f.type === 'outlet') {
+      let tot = 0; fieldWeights(f, (k, w) => tot += w); if (tot <= 0) continue;
+      const amount = f.type === 'inlet' ? f.s * Q : -((S.sim.balance && inflow > 0 && outS > 0) ? inflow * f.s / outS : f.s * Q);
+      fieldWeights(f, (k, w) => {
+        fa[k * 4 + 2] += amount * w / tot;
+        if (f.type === 'inlet') { fa[k * 4] += dir[0] * F * f.push * w * 2; fa[k * 4 + 1] += dir[1] * F * f.push * w * 2; fa[k * 4 + 3] += f.foam * w; }
+      });
+    } else if (f.type === 'push') {
+      fieldWeights(f, (k, w) => { fa[k * 4] += dir[0] * F * f.s * w; fa[k * 4 + 1] += dir[1] * F * f.s * w; });
+    } else if (f.type === 'spinner') {
+      const sg = f.cw ? 1 : -1;
+      fieldWeights(f, (k, w, dx, dy, d, r) => {
+        if (d < 1e-6) return; const prof = Math.sin(Math.PI * clamp(d / r, 0, 1)) * 0.8 + 0.2 * w;
+        const tx = -dy / d * sg, ty = dx / d * sg;
+        fa[k * 4] += (tx * prof * f.s - dx / d * f.pull * f.s * w) * F * 1.5;
+        fa[k * 4 + 1] += (ty * prof * f.s - dy / d * f.pull * f.s * w) * F * 1.5;
+      });
+    } else if (f.type === 'calm') {
+      fieldWeights(f, (k, w) => { fb[k * 4] += f.s * 0.12 * w; });
+    }
+  }
+  if (sim) { sim.upload('fa', fa); sim.upload('fb', fb); }
+}
+function simParams() {
+  const p = S.sim;
+  const big = Math.max(grid.W, grid.H);
+  // each step covers the same distance on the map whatever the grid size; the pressure solve reaches the whole area
+  const dt = clamp(big / 256, 1, 4);
+  return { closed: S.edges === 'closed', damp: p.damp, maxV: 1.2, shallow: p.shallow, swirl: p.swirl, cycles: p.cycles + (big > 512 ? 1 : 0), alpha: 1 / (big * big), beta: 1 / Math.max(20, p.avgSteps), dt,
+    foamDecay: 1 / Math.max(5, p.foamFade), foamImpact: p.foamImpact, foamSpeed: p.foamSpeed, foamTurb: p.foamTurb, foamInlet: p.foamInlet, vref: stats.vref };
+}
+
+// ---------------- view ----------------
+const glc = $('#gl'), ov = $('#overlay'), octx = ov.getContext('2d');
+const view = { s: 1, ox: 0, oy: 0 };
+let dpr = 1, cw = 0, ch = 0;
+function resizeCanvas() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  const r = $('#canvases').getBoundingClientRect(); cw = Math.max(1, r.width); ch = Math.max(1, r.height);
+  for (const c of [glc, ov]) { c.width = Math.round(cw * dpr); c.height = Math.round(ch * dpr); }
+}
+function fitView() {
+  if (!grid) return;
+  const pad = 70; const s = Math.min((cw - pad * 1.4) / grid.W, (ch - pad * 1.3) / grid.H);
+  view.s = Math.max(0.05, s); view.ox = (cw - grid.W * view.s) / 2 + 18; view.oy = (ch - grid.H * view.s) / 2 + 6;
+}
+const s2g = (sx, sy) => [(sx - view.ox) / view.s, (sy - view.oy) / view.s];
+const g2s = (gx, gy) => [view.ox + gx * view.s, view.oy + gy * view.s];
+const w2s = (x, y) => { const g = w2g(x, y); return g2s(g[0], g[1]); };
+const s2w = (sx, sy) => { const g = s2g(sx, sy); return g2w(g[0], g[1]); };
+
+let colors = {};
+function readColors() {
+  const c = n => hexToRgb(cssVar(n) || '#888');
+  colors = { cLand: c('--map-land'), cOutside: c('--map-outside'), cDeep: c('--map-deep'), cShallow: c('--map-shallow'), cBlock: c('--map-block'), cOpen: c('--c-open'), cProp: c('--map-prop'), cNofloor: c('--map-nofloor'), bg: c('--stage') };
+  colors.field = {}; for (const t in FIELD_TYPES) colors.field[t] = cssVar(FIELD_TYPES[t].color);
+  colors.fg = cssVar('--fg'); colors.panel = cssVar('--panel'); colors.accent = cssVar('--accent'); colors.prop = cssVar('--c-prop'); colors.block = cssVar('--c-block'); colors.open = cssVar('--c-open');
+}
+
+// ---------------- render loop ----------------
+let t0 = performance.now(), frame = 0, lastNow = 0, budget = 2, rate = { steps: 0, at: 0, last: 0, sps: 0 };
+function loop(now) {
+  requestAnimationFrame(loop);
+  frame++;
+  const dt = lastNow ? now - lastNow : 16; lastNow = now;
+  if (dt > 40) budget = Math.max(1, budget * 0.7); else if (dt < 24) budget = Math.min(S.sim.spf, budget + 0.5);
+  budget = Math.min(budget, S.sim.spf);
+  if (sim && grid) {
+    if (running) sim.run(Math.max(1, Math.round(budget)), simParams());
+    if (now - rate.at > 1000) { rate.sps = Math.round((sim.step - rate.last) * 1000 / (now - rate.at)); rate.last = sim.step; rate.at = now; $('#stRate').textContent = running ? rate.sps + ' steps/s' : 'paused'; }
+    if (now - stats.at > 600) { stats.at = now; refreshStats(); }
+    const rect = [view.ox * dpr, view.oy * dpr, grid.W * view.s * dpr, grid.H * view.s * dpr];
+    sim.draw(glc.width, glc.height, rect, { mode: S.view.mode, live: S.view.live, rs: S.exp.flipRed ? 1 : -1, gs: S.exp.flipGreen ? 1 : -1, Vref: stats.vref, Gain: S.exp.gain, Expo: expo(), Time: (now - t0) / 1000, Pmin: stats.pmin, Pmax: stats.pmax,
+      FoamGain: S.exp.foamGain, Dark: 0, PreviewTile: Math.max(6, 22 * grid.W / 384), PreviewSpeed: 0.45, colors: colors, bg: colors.bg });
+  }
+  drawOverlay();
+  $('#stStep').textContent = sim ? sim.step.toLocaleString() : '0';
+}
+function refreshStats() {
+  const a = sim.read('avg'); const N = grid.W * grid.H;
+  const sp = []; let pmin = Infinity, pmax = -Infinity, dsum = 0, vsum = 0; const stepK = N > 120000 ? 3 : 1;
+  for (let k = 0; k < N; k += stepK) {
+    if (solidMask[k]) continue;
+    const vx = a[k * 4], vy = a[k * 4 + 1]; const s = Math.hypot(vx, vy); sp.push(s);
+    const p = a[k * 4 + 3]; if (p < pmin) pmin = p; if (p > pmax) pmax = p;
+    if (stats.lastAvg) { dsum += Math.hypot(vx - stats.lastAvg[k * 4], vy - stats.lastAvg[k * 4 + 1]); vsum += s; }
+  }
+  if (sp.length) {
+    sp.sort((x, y) => x - y);
+    const v = sp[Math.floor(sp.length * 0.985)] || 0;
+    stats.vref = Math.max(1e-4, v);
+  }
+  stats.pmin = isFinite(pmin) ? pmin : 0; stats.pmax = isFinite(pmax) ? pmax : 1;
+  stats.change = stats.lastAvg ? (vsum > 0 ? dsum / vsum : 0) : 1;
+  stats.lastAvg = a; stats.avg = a;
+  const el = $('#stSettle');
+  const hasFlow = sp.length && stats.vref > 1e-3 && S.fields.length;
+  if (!S.fields.length) { el.className = 'chip'; el.textContent = 'No water objects yet'; }
+  else if (!hasFlow) { el.className = 'chip warn'; el.textContent = 'Nothing is moving'; }
+  else if (sim.step < 200) { el.className = 'chip'; el.textContent = 'Warming up'; }
+  else if (stats.change < 0.004) { el.className = 'chip ok'; el.textContent = 'Settled, ready to export'; }
+  else { el.className = 'chip warn'; el.textContent = 'Still changing ' + (stats.change * 100).toFixed(1) + '%'; }
+}
+
+function drawOverlay() {
+  const c = octx; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, cw, ch);
+  if (!grid) return;
+  // area outline
+  const [ax, ay] = g2s(0, 0); const aw = grid.W * view.s, ah = grid.H * view.s;
+  c.strokeStyle = colors.accent; c.lineWidth = 1.5; c.setLineDash([6, 4]); c.strokeRect(ax - .5, ay - .5, aw + 1, ah + 1); c.setLineDash([]);
+  c.font = '500 11px ' + cssVar('--f-mono'); c.fillStyle = colors.fg; c.textBaseline = 'bottom';
+  c.fillText(`(${fmt(grid.b.xmin)}, ${fmt(grid.b.ymax)})`, ax, ay - 4);
+  c.textAlign = 'right'; c.textBaseline = 'top'; c.fillText(`(${fmt(grid.b.xmax)}, ${fmt(grid.b.ymin)})`, ax + aw, ay + ah + 4); c.textAlign = 'left';
+  // flow arrows
+  if (S.view.arrows && stats.avg && (S.view.mode !== 5)) {
+    const a = stats.avg; const step = 26; const g0 = s2g(0, 0), g1 = s2g(cw, ch);
+    const gs = step / view.s;
+    c.strokeStyle = 'rgba(10,14,18,.78)'; c.fillStyle = 'rgba(10,14,18,.78)';
+    if (S.view.mode === 0 || S.view.mode === 2) { c.strokeStyle = 'rgba(255,255,255,.85)'; c.fillStyle = 'rgba(255,255,255,.85)'; }
+    c.lineWidth = 1.2;
+    const sx0 = Math.max(gs / 2, Math.ceil((g0[0] - gs / 2) / gs) * gs + gs / 2), sy0 = Math.max(gs / 2, Math.ceil((g0[1] - gs / 2) / gs) * gs + gs / 2);
+    for (let gy = sy0; gy < Math.min(grid.H, g1[1]); gy += gs) for (let gx = sx0; gx < Math.min(grid.W, g1[0]); gx += gs) {
+      const i = Math.floor(gx), j = Math.floor(gy); const k = j * grid.W + i; if (solidMask[k]) continue;
+      let vx = a[k * 4] / stats.vref * S.exp.gain, vy = a[k * 4 + 1] / stats.vref * S.exp.gain; const l = Math.hypot(vx, vy); if (l < 0.02) continue;
+      { const q = Math.min(1, Math.pow(l, expo())) / l; vx *= q; vy *= q; }
+      const [px, py] = g2s(gx, gy); const L = step * 0.42;
+      const ex = px + vx * L, ey = py + vy * L;
+      c.beginPath(); c.moveTo(px - vx * L * 0.6, py - vy * L * 0.6); c.lineTo(ex, ey); c.stroke();
+      const an = Math.atan2(vy, vx), hs = 4.2;
+      c.beginPath(); c.moveTo(ex, ey); c.lineTo(ex - hs * Math.cos(an - .45), ey - hs * Math.sin(an - .45)); c.lineTo(ex - hs * Math.cos(an + .45), ey - hs * Math.sin(an + .45)); c.closePath(); c.fill();
+    }
+  }
+  // props
+  if (geo && geo.props && geo.props.length && (tool === 'prop' || Object.keys(S.propBlocks).length)) {
+    for (const p of geo.props) {
+      const [sx, sy] = w2s(p.x, p.y); if (sx < -20 || sy < -20 || sx > cw + 20 || sy > ch + 20) continue;
+      const g = w2g(p.x, p.y); if (g[0] < 0 || g[1] < 0 || g[0] > grid.W || g[1] > grid.H) continue;
+      const on = !!S.propBlocks[p.id];
+      if (on) { c.strokeStyle = colors.prop; c.lineWidth = 1.5; c.beginPath(); c.arc(sx, sy, Math.max(3, S.propRadius / grid.cx * view.s), 0, Math.PI * 2); c.stroke(); }
+      if (tool === 'prop' || on) { c.fillStyle = colors.prop; c.beginPath(); c.arc(sx, sy, on ? 3.5 : 2.5, 0, Math.PI * 2); c.fill(); }
+    }
+  }
+  // fields
+  for (const f of S.fields) drawField(c, f, f === selected);
+  // drag preview
+  if (drag && drag.kind === 'place') { const [sx, sy] = w2s(drag.f.x, drag.f.y); c.strokeStyle = colors.fg; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(sx, sy); c.lineTo(drag.sx, drag.sy); c.stroke(); c.setLineDash([]); }
+  if (drag && drag.kind === 'paintRect') {
+    c.strokeStyle = tool === 'block' ? colors.block : tool === 'open' ? colors.open : colors.fg; c.lineWidth = 1.5; c.setLineDash([5, 3]);
+    c.fillStyle = tool === 'block' ? colors.block : tool === 'open' ? colors.open : colors.fg; c.globalAlpha = 0.18;
+    const x = Math.min(drag.x0, drag.sx), y = Math.min(drag.y0, drag.sy), w = Math.abs(drag.sx - drag.x0), h = Math.abs(drag.sy - drag.y0);
+    c.fillRect(x, y, w, h); c.globalAlpha = 1; c.strokeRect(x, y, w, h); c.setLineDash([]);
+  }
+  if (drag && drag.kind === 'area') { c.strokeStyle = colors.accent; c.fillStyle = 'rgba(60,180,200,.12)'; const x = Math.min(drag.x0, drag.sx), y = Math.min(drag.y0, drag.sy); c.fillRect(x, y, Math.abs(drag.sx - drag.x0), Math.abs(drag.sy - drag.y0)); c.strokeRect(x, y, Math.abs(drag.sx - drag.x0), Math.abs(drag.sy - drag.y0)); }
+  // brush cursor
+  if ((tool === 'block' || tool === 'open' || tool === 'erase') && mouse.in && S.ui.paintShape === 'brush' && !drag) {
+    const r = brushR / grid.cx * view.s; c.strokeStyle = tool === 'block' ? colors.block : tool === 'open' ? colors.open : colors.fg; c.lineWidth = 1.5;
+    c.beginPath(); c.arc(mouse.x, mouse.y, r, 0, Math.PI * 2); c.stroke();
+  }
+}
+function boxGeom(f) {
+  const [sx, sy] = w2s(f.x, f.y); const an = -f.a * Math.PI / 180; const ux = Math.cos(an), uy = Math.sin(an), vx = -uy, vy = ux;
+  const hl = f.len / 2 / grid.cx * view.s, hw = f.wid / 2 / grid.cx * view.s;
+  return { sx, sy, ux, uy, vx, vy, hl, hw, front: [sx + ux * hl, sy + uy * hl], back: [sx - ux * hl, sy - uy * hl], side: [sx + vx * hw, sy + vy * hw] };
+}
+function drawBox(c, f, sel) {
+  const g = boxGeom(f), col = colors.field[f.type];
+  const P = (u, v) => [g.sx + g.ux * u + g.vx * v, g.sy + g.uy * u + g.vy * v];
+  const pts = [P(-g.hl, -g.hw), P(g.hl, -g.hw), P(g.hl, g.hw), P(-g.hl, g.hw)];
+  c.save();
+  c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath();
+  c.globalAlpha = 0.16; c.fillStyle = col; c.fill(); c.globalAlpha = 1;
+  c.strokeStyle = col; c.lineWidth = sel ? 2.4 : 1.6; c.setLineDash(f.type === 'calm' ? [4, 4] : []); c.stroke(); c.setLineDash([]);
+  c.strokeStyle = col; c.fillStyle = col; c.lineWidth = 2;
+  if (f.type === 'push') {
+    // chevrons along the length
+    const n = Math.max(1, Math.min(14, Math.floor(g.hl * 2 / 42))); const cw = Math.min(10, g.hw * 0.7 + 3);
+    for (let k = 0; k < n; k++) {
+      const u = -g.hl + (k + 0.5) * (2 * g.hl / n) + 4;
+      const tip = P(u, 0), l = P(u - 7, -cw), r = P(u - 7, cw);
+      c.beginPath(); c.moveTo(l[0], l[1]); c.lineTo(tip[0], tip[1]); c.lineTo(r[0], r[1]); c.stroke();
+    }
+  } else { c.lineWidth = 2; for (let k = -1; k <= 1; k++) { const a = P(-9, k * 6), b = P(9, k * 6); c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } }
+  if (sel) {
+    c.fillStyle = colors.panel; c.strokeStyle = colors.fg; c.lineWidth = 1.5;
+    for (const h of [g.front, g.back]) { c.beginPath(); c.arc(h[0], h[1], 6, 0, Math.PI * 2); c.fill(); c.stroke(); }
+    c.fillRect(g.side[0] - 5, g.side[1] - 5, 10, 10); c.strokeRect(g.side[0] - 5, g.side[1] - 5, 10, 10);
+    c.beginPath(); c.arc(g.sx, g.sy, 3, 0, Math.PI * 2); c.fill(); c.stroke();
+  }
+  c.restore();
+}
+function drawField(c, f, sel) {
+  if (isBox(f)) return drawBox(c, f, sel);
+  const [sx, sy] = w2s(f.x, f.y); const r = f.r / grid.cx * view.s; const col = colors.field[f.type];
+  c.save();
+  c.globalAlpha = 0.16; c.fillStyle = col; c.beginPath(); c.arc(sx, sy, r, 0, Math.PI * 2); c.fill();
+  c.globalAlpha = 1; c.strokeStyle = col; c.lineWidth = sel ? 2.4 : 1.6; c.setLineDash(f.type === 'calm' ? [4, 4] : []);
+  c.beginPath(); c.arc(sx, sy, r, 0, Math.PI * 2); c.stroke(); c.setLineDash([]);
+  c.fillStyle = col; c.strokeStyle = col; c.lineWidth = 2;
+  const ang = -f.a * Math.PI / 180; // screen angle
+  const arrow = (x0, y0, x1, y1, hs = 7) => { c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); const an = Math.atan2(y1 - y0, x1 - x0); c.beginPath(); c.moveTo(x1, y1); c.lineTo(x1 - hs * Math.cos(an - .5), y1 - hs * Math.sin(an - .5)); c.lineTo(x1 - hs * Math.cos(an + .5), y1 - hs * Math.sin(an + .5)); c.closePath(); c.fill(); };
+  const rr = Math.max(r, 14);
+  if (f.type === 'push' || (f.type === 'inlet' && f.push > 0)) arrow(sx - Math.cos(ang) * rr * 0.55, sy - Math.sin(ang) * rr * 0.55, sx + Math.cos(ang) * rr, sy + Math.sin(ang) * rr);
+  if (f.type === 'inlet') { for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + Math.PI / 4; arrow(sx + Math.cos(a) * 3, sy + Math.sin(a) * 3, sx + Math.cos(a) * Math.min(rr * 0.45, 16), sy + Math.sin(a) * Math.min(rr * 0.45, 16), 4.5); } }
+  if (f.type === 'outlet') { for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + Math.PI / 4; arrow(sx + Math.cos(a) * Math.min(rr * 0.5, 18), sy + Math.sin(a) * Math.min(rr * 0.5, 18), sx + Math.cos(a) * 4, sy + Math.sin(a) * 4, 4.5); } }
+  if (f.type === 'spinner') {
+    const rad = Math.max(8, r * 0.62); const dirS = f.cw ? 1 : -1;
+    c.beginPath(); c.arc(sx, sy, rad, 0.3, Math.PI * 1.5, false); c.stroke();
+    const endA = f.cw ? Math.PI * 1.5 : 0.3; const x1 = sx + Math.cos(endA) * rad, y1 = sy + Math.sin(endA) * rad;
+    const tx = -Math.sin(endA) * dirS, ty = Math.cos(endA) * dirS;
+    c.beginPath(); c.moveTo(x1 + tx * 7, y1 + ty * 7); c.lineTo(x1 - ty * 4.5, y1 + tx * 4.5); c.lineTo(x1 + ty * 4.5, y1 - tx * 4.5); c.closePath(); c.fill();
+  }
+  if (f.type === 'calm') { c.lineWidth = 2; for (let k = -1; k <= 1; k++) { c.beginPath(); c.moveTo(sx - 9, sy + k * 6); c.lineTo(sx + 9, sy + k * 6); c.stroke(); } }
+  c.beginPath(); c.arc(sx, sy, 3, 0, Math.PI * 2); c.fillStyle = colors.panel; c.fill(); c.stroke();
+  if (sel) {
+    const hx = sx + r * Math.SQRT1_2, hy = sy + r * Math.SQRT1_2;
+    c.fillStyle = colors.panel; c.strokeStyle = colors.fg; c.lineWidth = 1.5; c.fillRect(hx - 5, hy - 5, 10, 10); c.strokeRect(hx - 5, hy - 5, 10, 10);
+    if (hasDir(f)) { const dx = sx + Math.cos(ang) * rr, dy = sy + Math.sin(ang) * rr; c.beginPath(); c.arc(dx, dy, 6, 0, Math.PI * 2); c.fill(); c.stroke(); }
+  }
+  c.restore();
+}
+const hasDir = f => f.type === 'push' || f.type === 'inlet';
+
+// ---------------- interaction ----------------
+const mouse = { x: 0, y: 0, in: false };
+let drag = null, spaceDown = false;
+function hitField(sx, sy) {
+  let best = null, bd = Infinity;
+  for (const f of S.fields) {
+    if (isBox(f)) {
+      const g = boxGeom(f); const dx = sx - g.sx, dy = sy - g.sy; const u = Math.abs(dx * g.ux + dy * g.uy), v = Math.abs(dx * g.vx + dy * g.vy);
+      const hl = Math.max(g.hl, 8), hw = Math.max(g.hw, 8);
+      if (u <= hl && v <= hw) { const s = Math.max(u / hl, v / hw); if (s < bd) { bd = s; best = f; } }
+      continue;
+    }
+    const [fx, fy] = w2s(f.x, f.y); const r = Math.max(10, f.r / grid.cx * view.s); const d = Math.hypot(sx - fx, sy - fy); if (d <= r && d / r < bd) { bd = d / r; best = f; }
+  }
+  return best;
+}
+function hitHandle(sx, sy) {
+  if (!selected) return null; const f = selected;
+  if (isBox(f)) {
+    const g = boxGeom(f);
+    if (Math.hypot(sx - g.front[0], sy - g.front[1]) < 9) return 'front';
+    if (Math.hypot(sx - g.back[0], sy - g.back[1]) < 9) return 'back';
+    if (Math.hypot(sx - g.side[0], sy - g.side[1]) < 9) return 'width';
+    return null;
+  }
+  const [fx, fy] = w2s(f.x, f.y); const r = f.r / grid.cx * view.s;
+  if (Math.hypot(sx - (fx + r * Math.SQRT1_2), sy - (fy + r * Math.SQRT1_2)) < 9) return 'radius';
+  if (hasDir(f)) { const rr = Math.max(r, 14), an = -f.a * Math.PI / 180; if (Math.hypot(sx - (fx + Math.cos(an) * rr), sy - (fy + Math.sin(an) * rr)) < 9) return 'dir'; }
+  return null;
+}
+function newField(type, x, y) {
+  const span = Math.max(grid.b.xmax - grid.b.xmin, grid.b.ymax - grid.b.ymin);
+  const r = Math.round(clamp(span * 0.045, 48, 1024) / 8) * 8;
+  const f = { id: S.nextId++, type, x: Math.round(x), y: Math.round(y), r, s: 1, a: 0, soft: 0.5, push: 0.6, foam: 0.5, pull: 0, cw: true, shape: 'circle', len: r * 4, wid: r };
+  if ((type === 'push' || type === 'calm') && S.ui.zoneShape === 'box') f.shape = 'box';
+  if (type === 'calm') f.s = 0.6;
+  if (type === 'spinner') f.r = Math.round(r * 1.6 / 8) * 8;
+  return f;
+}
+function snapshot() { return { fields: JSON.parse(JSON.stringify(S.fields)), paint: paint ? paint.slice() : null, props: { ...S.propBlocks }, grid: grid ? { W: grid.W, H: grid.H } : null }; }
+function pushUndo() { undo.push(snapshot()); if (undo.length > 40) undo.shift(); redo = []; }
+function restore(sn) {
+  S.fields = sn.fields; S.propBlocks = sn.props;
+  if (sn.paint && grid && sn.grid && sn.grid.W === grid.W && sn.grid.H === grid.H) paint = sn.paint.slice();
+  selected = S.fields.find(f => selected && f.id === selected.id) || null;
+  compose(); buildFields(); renderObjects();
+}
+function doUndo() { if (!undo.length) return; redo.push(snapshot()); restore(undo.pop()); }
+function doRedo() { if (!redo.length) return; undo.push(snapshot()); restore(redo.pop()); }
+function paintAt(sx, sy) {
+  const [gx, gy] = s2g(sx, sy); const r = brushR / grid.cx; const v = tool === 'block' ? 1 : tool === 'open' ? 2 : 0;
+  for (let j = Math.max(0, Math.floor(gy - r)); j <= Math.min(grid.H - 1, Math.ceil(gy + r)); j++)
+    for (let i = Math.max(0, Math.floor(gx - r)); i <= Math.min(grid.W - 1, Math.ceil(gx + r)); i++)
+      if ((i + .5 - gx) ** 2 + (j + .5 - gy) ** 2 <= r * r) paint[j * grid.W + i] = v;
+}
+ov.addEventListener('pointerdown', e => {
+  if (!grid) return;
+  ov.setPointerCapture(e.pointerId);
+  const sx = e.offsetX, sy = e.offsetY;
+  if (e.button === 1 || e.button === 2 || tool === 'pan' || spaceDown) { drag = { kind: 'pan', sx, sy, ox: view.ox, oy: view.oy }; e.preventDefault(); return; }
+  const [wx, wy] = s2w(sx, sy);
+  if (tool === 'select') {
+    const h = hitHandle(sx, sy);
+    if (h) { pushUndo(); drag = { kind: h, f: selected }; return; }
+    const f = hitField(sx, sy);
+    selected = f; renderObjects();
+    if (f) { pushUndo(); drag = { kind: 'move', f, dx: f.x - wx, dy: f.y - wy, moved: false }; }
+    else drag = { kind: 'pan', sx, sy, ox: view.ox, oy: view.oy };
+    return;
+  }
+  if (FIELD_TYPES[tool]) {
+    pushUndo(); const f = newField(tool, wx, wy); S.fields.push(f); selected = f;
+    if (isBox(f)) { f.len = 16; drag = { kind: 'placeBox', f, x0: wx, y0: wy, moved: false }; }
+    else drag = { kind: 'place', f, sx, sy };
+    buildFields(); renderObjects(); updateHint(); return;
+  }
+  if (tool === 'block' || tool === 'open' || tool === 'erase') {
+    pushUndo();
+    if (S.ui.paintShape === 'rect') { drag = { kind: 'paintRect', x0: sx, y0: sy, sx, sy }; return; }
+    drag = { kind: 'paint' }; paintAt(sx, sy); compose(); return;
+  }
+  if (tool === 'prop' && geo && geo.props) {
+    let best = null, bd = 14;
+    for (const p of geo.props) { const [px, py] = w2s(p.x, p.y); const d = Math.hypot(px - sx, py - sy); if (d < bd) { bd = d; best = p; } }
+    if (best) { pushUndo(); if (S.propBlocks[best.id]) delete S.propBlocks[best.id]; else S.propBlocks[best.id] = 1; compose(); buildFields(); syncPropNote(); }
+    return;
+  }
+  if (tool === 'area') { drag = { kind: 'area', x0: sx, y0: sy, sx, sy }; }
+});
+ov.addEventListener('pointermove', e => {
+  const sx = e.offsetX, sy = e.offsetY; mouse.x = sx; mouse.y = sy; mouse.in = true;
+  if (grid) { const [wx, wy] = s2w(sx, sy); $('#stCursor').textContent = `X ${Math.round(wx)}  Y ${Math.round(wy)}`; }
+  if (!drag) { if (tool === 'select' && grid) ov.style.cursor = hitHandle(sx, sy) ? 'pointer' : hitField(sx, sy) ? 'move' : 'grab'; return; }
+  const [wx, wy] = s2w(sx, sy);
+  if (drag.kind === 'pan') { view.ox = drag.ox + (sx - drag.sx); view.oy = drag.oy + (sy - drag.sy); ov.style.cursor = 'grabbing'; }
+  else if (drag.kind === 'move') { drag.f.x = Math.round(wx + drag.dx); drag.f.y = Math.round(wy + drag.dy); drag.moved = true; buildFieldsSoon(); renderObjEditorValues(); }
+  else if (drag.kind === 'radius') { const f = drag.f; f.r = Math.max(8, Math.round(Math.hypot(wx - f.x, wy - f.y) / 4) * 4); buildFieldsSoon(); renderObjEditorValues(); }
+  else if (drag.kind === 'dir') { const f = drag.f; f.a = Math.round(Math.atan2(wy - f.y, wx - f.x) * 180 / Math.PI); buildFieldsSoon(); renderObjEditorValues(); }
+  else if (drag.kind === 'place') { drag.sx = sx; drag.sy = sy; const f = drag.f; const d = Math.hypot(wx - f.x, wy - f.y); if (d > grid.cx * 2 && hasDir(f)) { f.a = Math.round(Math.atan2(wy - f.y, wx - f.x) * 180 / Math.PI); buildFieldsSoon(); } }
+  else if (drag.kind === 'paint') { paintAt(sx, sy); composeSoon(); }
+  else if (drag.kind === 'paintRect') { drag.sx = sx; drag.sy = sy; }
+  else if (drag.kind === 'placeBox' || drag.kind === 'front' || drag.kind === 'back') {
+    const f = drag.f;
+    let ax, ay, bx, by; // a = fixed end, b = moving end (in the push direction for 'front'/'placeBox')
+    if (drag.kind === 'placeBox') { ax = drag.x0; ay = drag.y0; bx = wx; by = wy; drag.moved = true; }
+    else {
+      const an = f.a * Math.PI / 180, ux = Math.cos(an), uy = Math.sin(an);
+      if (!drag.fixed) drag.fixed = drag.kind === 'front' ? [f.x - ux * f.len / 2, f.y - uy * f.len / 2] : [f.x + ux * f.len / 2, f.y + uy * f.len / 2];
+      if (drag.kind === 'front') { [ax, ay] = drag.fixed; bx = wx; by = wy; } else { ax = wx; ay = wy; [bx, by] = drag.fixed; }
+    }
+    const L = Math.hypot(bx - ax, by - ay);
+    if (L > 4) { f.a = Math.round(Math.atan2(by - ay, bx - ax) * 180 / Math.PI); f.len = Math.max(16, Math.round(L)); f.x = Math.round((ax + bx) / 2); f.y = Math.round((ay + by) / 2); }
+    if (drag.kind === 'placeBox') f.wid = Math.max(32, Math.round(Math.max(f.r, f.len * 0.25) / 8) * 8);
+    buildFieldsSoon(); renderObjEditorValues();
+  }
+  else if (drag.kind === 'width') {
+    const f = drag.f; const an = f.a * Math.PI / 180; const vx = -Math.sin(an), vy = Math.cos(an);
+    f.wid = Math.max(16, Math.round(Math.abs((wx - f.x) * vx + (wy - f.y) * vy) * 2 / 4) * 4); buildFieldsSoon(); renderObjEditorValues();
+  }
+  else if (drag.kind === 'area') { drag.sx = sx; drag.sy = sy; }
+});
+const endDrag = e => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (d.kind === 'move' && !d.moved) undo.pop();
+  if (d.kind === 'paint') { compose(); buildFields(); }
+  if (d.kind === 'placeBox' && !d.moved) { const f = d.f; const span = Math.max(grid.b.xmax - grid.b.xmin, grid.b.ymax - grid.b.ymin); f.len = Math.round(clamp(span * 0.15, 128, 4096) / 8) * 8; f.wid = Math.round(Math.max(32, f.r) / 8) * 8; }
+  if (['place', 'placeBox', 'move', 'radius', 'dir', 'front', 'back', 'width'].includes(d.kind)) { buildFields(); renderObjects(); }
+  if (d.kind === 'paintRect') {
+    if (Math.abs(d.sx - d.x0) > 2 && Math.abs(d.sy - d.y0) > 2) {
+      const [g0x, g0y] = s2g(Math.min(d.x0, d.sx), Math.min(d.y0, d.sy)), [g1x, g1y] = s2g(Math.max(d.x0, d.sx), Math.max(d.y0, d.sy));
+      const v = tool === 'block' ? 1 : tool === 'open' ? 2 : 0;
+      for (let j = Math.max(0, Math.ceil(g0y - 0.5)); j <= Math.min(grid.H - 1, Math.floor(g1y - 0.5)); j++)
+        for (let i = Math.max(0, Math.ceil(g0x - 0.5)); i <= Math.min(grid.W - 1, Math.floor(g1x - 0.5)); i++) paint[j * grid.W + i] = v;
+      compose(); buildFields();
+    } else undo.pop();
+  }
+  if (d.kind === 'area') {
+    const [x0, y0] = s2w(d.x0, d.y0), [x1, y1] = s2w(d.sx, d.sy);
+    if (Math.abs(d.sx - d.x0) > 8 && Math.abs(d.sy - d.y0) > 8) { S.bounds = { xmin: Math.round(Math.min(x0, x1)), xmax: Math.round(Math.max(x0, x1)), ymin: Math.round(Math.min(y0, y1)), ymax: Math.round(Math.max(y0, y1)) }; setTool('select'); rebuildSoon(); }
+  }
+  ov.style.cursor = '';
+};
+ov.addEventListener('pointerup', endDrag); ov.addEventListener('pointercancel', endDrag);
+ov.addEventListener('pointerleave', () => { mouse.in = false; });
+ov.addEventListener('contextmenu', e => e.preventDefault());
+ov.addEventListener('wheel', e => {
+  e.preventDefault(); const k = Math.exp(-e.deltaY * 0.0015 * (e.deltaMode === 1 ? 30 : 1));
+  const sx = e.offsetX, sy = e.offsetY; const ns = clamp(view.s * k, 0.05, 80);
+  view.ox = sx - (sx - view.ox) * ns / view.s; view.oy = sy - (sy - view.oy) * ns / view.s; view.s = ns;
+}, { passive: false });
+let soonF = 0, soonC = 0, soonR = 0;
+function buildFieldsSoon() { if (soonF) return; soonF = requestAnimationFrame(() => { soonF = 0; buildFields(); }); }
+function composeSoon() { if (soonC) return; soonC = requestAnimationFrame(() => { soonC = 0; compose(); }); }
+function rebuildSoon() { clearTimeout(soonR); soonR = setTimeout(() => { busy(true, 'Rebuilding collision…'); setTimeout(() => { try { rasterNow(); } finally { busy(false); } }, 20); }, 250); }
+
+window.addEventListener('keydown', e => {
+  if (e.target.closest('input, textarea, select')) return;
+  const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); e.shiftKey ? doRedo() : doUndo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); doRedo(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === ' ') { e.preventDefault(); if (!spaceDown) { spaceDown = true; spaceAt = performance.now(); } return; }
+  if (e.key === 'Delete' || e.key === 'Backspace') { if (selected) { pushUndo(); S.fields = S.fields.filter(f => f !== selected); selected = null; buildFields(); renderObjects(); } return; }
+  if (e.key === 'Escape') { setTool('select'); selected = null; renderObjects(); return; }
+  if (k === 'f') { fitView(); return; }
+  if (k === '[') { setBrush(brushR / 1.25); return; } if (k === ']') { setBrush(brushR * 1.25); return; }
+  const t = TOOLS.find(t => t.key && t.key.toLowerCase() === k); if (t) setTool(t.id);
+});
+let spaceAt = 0;
+window.addEventListener('keyup', e => { if (e.key === ' ') { spaceDown = false; if (performance.now() - spaceAt < 250 && !drag) toggleRun(); } });
+
+// ---------------- toolbar ----------------
+const ICON = {
+  select: '<path d="M5 3l14 8-6 1.5L10 19z"/>',
+  pan: '<path d="M12 3v18M3 12h18M12 3l-3 3m3-3 3 3M12 21l-3-3m3 3 3-3M3 12l3-3m-3 3 3 3M21 12l-3-3m3 3-3 3"/>',
+  inlet: '<circle cx="12" cy="12" r="8"/><path d="M12 12l4-4m-4 4-4 4m4-4 4 4m-4-4-4-4"/>',
+  outlet: '<circle cx="12" cy="12" r="8"/><path d="M16 8l-3 3m-5 5 3-3m5 3-3-3m-5-5 3 3"/>',
+  push: '<path d="M3 12h15m-5-5 5 5-5 5"/>',
+  spinner: '<path d="M19 12a7 7 0 1 1-3-5.7"/><path d="M17 3v4h-4"/>',
+  calm: '<path d="M4 8h16M4 12h16M4 16h16"/>',
+  block: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 14l10-10M10 20 20 10"/>',
+  open: '<path d="M3 15c3-3 6 3 9 0s6 3 9 0M3 9c3-3 6 3 9 0s6 3 9 0"/>',
+  erase: '<path d="M8 20h12M5 15l8-8 6 6-5 5H8z"/>',
+  prop: '<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/>',
+  area: '<path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/>',
+};
+const TOOLS = [
+  { id: 'select', key: 'V', tip: 'Select and move' }, { id: 'pan', key: 'H', tip: 'Pan' }, { sep: 1 },
+  { id: 'inlet', key: 'I', tip: 'Inlet: water enters' }, { id: 'outlet', key: 'O', tip: 'Outlet: water drains' }, { id: 'push', key: 'P', tip: 'Push: drag to aim' },
+  { id: 'spinner', key: 'S', tip: 'Spinner: swirl' }, { id: 'calm', key: 'C', tip: 'Calm: slow water' }, { sep: 1 },
+  { id: 'block', key: 'B', tip: 'Paint blocker' }, { id: 'open', key: 'W', tip: 'Paint water (removes land)' }, { id: 'erase', key: 'E', tip: 'Erase painting' },
+  { id: 'prop', key: 'R', tip: 'Click props that block water' }, { id: 'area', key: 'A', tip: 'Draw the flowmap area' },
+];
+function buildToolbar() {
+  const el = $('#tools'); el.innerHTML = '';
+  for (const t of TOOLS) {
+    if (t.sep) { const s = document.createElement('div'); s.className = 'sep'; el.appendChild(s); continue; }
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'tool'; b.id = 'tool-' + t.id; b.dataset.tip = t.tip + (t.key ? '  (' + t.key + ')' : ''); b.setAttribute('aria-label', t.tip);
+    const col = FIELD_TYPES[t.id] ? `style="color:var(${FIELD_TYPES[t.id].color})"` : t.id === 'block' ? 'style="color:var(--c-block)"' : t.id === 'open' ? 'style="color:var(--c-open)"' : t.id === 'prop' ? 'style="color:var(--c-prop)"' : '';
+    b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${col}>${ICON[t.id]}</svg><span class="k">${t.key}</span>`;
+    b.addEventListener('click', () => setTool(t.id));
+    el.appendChild(b);
+  }
+}
+function setTool(id) {
+  if (id === 'prop' && !(geo && geo.props && geo.props.length)) { toast('This map has no props to mark.'); return; }
+  tool = id;
+  for (const t of TOOLS) if (t.id) { const b = $('#tool-' + t.id); if (b) b.setAttribute('aria-pressed', String(t.id === id)); }
+  $('#brushbox').hidden = !(id === 'block' || id === 'open' || id === 'erase');
+  $('#zonebox').hidden = !(id === 'push' || id === 'calm');
+  syncToolBoxes();
+  ov.style.cursor = id === 'pan' ? 'grab' : id === 'select' ? '' : 'crosshair';
+  updateHint();
+}
+function setBrush(v) { brushR = clamp(Math.round(v), 4, 8192); setSlider('rngBrush', brushR); }
+function syncToolBoxes() {
+  for (const b of $('#segPaint').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.v === S.ui.paintShape));
+  for (const b of $('#segZone').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.v === S.ui.zoneShape));
+  $('#brushSize').hidden = S.ui.paintShape !== 'brush';
+}
+$('#segPaint').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.ui.paintShape = b.dataset.v; syncToolBoxes(); updateHint(); });
+$('#segZone').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.ui.zoneShape = b.dataset.v; syncToolBoxes(); updateHint(); });
+
+const VIEWS = [['Map', 0], ['Flowmap', 1], ['Speed', 2], ['Foam', 3], ['Height', 4], ['Water', 5]];
+function buildViews() {
+  const el = $('#segView'); el.innerHTML = '';
+  for (const [n, m] of VIEWS) { const b = document.createElement('button'); b.type = 'button'; b.textContent = n; b.id = 'view-' + m; b.addEventListener('click', () => { S.view.mode = m; syncViews(); }); el.appendChild(b); }
+}
+function syncViews() {
+  for (const [, m] of VIEWS) $('#view-' + m).setAttribute('aria-pressed', String(S.view.mode === m));
+  const L = $('#legend');
+  const sw = (v, t) => `<span><i style="background:var(${v})"></i>${t}</span>`;
+  if (S.view.mode === 0) L.innerHTML = sw('--map-shallow', 'shallow') + sw('--map-deep', 'deep') + sw('--map-land', 'land') + sw('--map-outside', 'outside the water brushes') + sw('--map-block', 'painted blocker') + sw('--map-prop', 'prop');
+  else if (S.view.mode === 1) L.innerHTML = `<span>Colours as exported · more red = flowing ${S.exp.flipRed ? 'east (+X)' : 'west (−X)'} · more green = flowing ${S.exp.flipGreen ? 'south (−Y)' : 'north (+Y)'} · 50% = still</span>`;
+  else if (S.view.mode === 2) L.innerHTML = '<span>Speed, slow → fast (relative)</span>';
+  else if (S.view.mode === 3) L.innerHTML = '<span>Foam, as it will go into the alpha channel</span>';
+  else if (S.view.mode === 4) L.innerHTML = '<span>Water surface height (pressure), low → high</span>';
+  else L.innerHTML = '<span>Animated preview of the water using this flowmap</span>';
+}
+$('#chkArrows').addEventListener('change', e => S.view.arrows = e.target.checked);
+
+function updateHint() {
+  const h = $('#hint');
+  let msg = '';
+  if (tool === 'area') msg = 'Drag a rectangle over the water you want the flowmap to cover.';
+  else if (tool === 'prop') msg = 'Click a prop dot to make it block water. Click again to clear it.';
+  else if ((tool === 'block' || tool === 'open' || tool === 'erase') && S.ui.paintShape === 'rect') msg = 'Drag a rectangle to ' + (tool === 'block' ? 'block it' : tool === 'open' ? 'make it water' : 'clear painting inside it') + '.';
+  else if ((tool === 'push' || tool === 'calm') && S.ui.zoneShape === 'box') msg = tool === 'push' ? 'Drag from where the push starts to where it ends. Water is pushed along the rectangle.' : 'Drag along the stretch of water to calm.';
+  else if (FIELD_TYPES[tool]) msg = tool === 'push' ? 'Click and drag in the direction the water should go.' : tool === 'inlet' ? 'Click where water enters. Drag to give it a push direction.' : `Click on the water to place a ${FIELD_TYPES[tool].name.toLowerCase()}.`;
+  else if (!S.fields.length && grid) msg = 'Place an inlet (I) where the water comes from and an outlet (O) where it leaves. Pushes (P) and spinners (S) shape the flow.';
+  h.textContent = msg; h.hidden = !msg;
+}
+
+// ---------------- sliders with typed values ----------------
+const NUMS = {};
+const decOf = step => { const s = String(step); return s.includes('.') ? s.split('.')[1].length : 0; };
+const fmtD = (v, d) => { const r = (+v).toFixed(d); return d ? String(parseFloat(r)) : r; };
+// range + number box; onSet(v) gets the exact value; extend = typed values may exceed the slider's max
+function linkSlider(range, unit, onSet, opts = {}) {
+  const ctl = range.parentElement; const d = decOf(range.step || 1);
+  const num = document.createElement('input'); num.type = 'number'; num.className = 'numin'; num.id = range.id + 'Num';
+  num.step = range.step || 1; num.min = range.min; if (!opts.extend) num.max = range.max;
+  const lab = document.querySelector(`label[for="${range.id}"]`); num.setAttribute('aria-label', (lab ? lab.textContent : range.id) + (unit ? ' (' + unit + ')' : ''));
+  num.value = fmtD(range.value, d);
+  const out = ctl.querySelector('output'); if (out) out.replaceWith(num); else range.after(num);
+  const u = document.createElement('span'); u.className = 'unit'; u.textContent = unit || ''; num.after(u);
+  NUMS[range.id] = { num, d };
+  range.addEventListener('input', () => { num.value = fmtD(range.value, d); onSet(+range.value, false); });
+  range.addEventListener('change', () => onSet(+range.value, true));
+  num.addEventListener('change', () => {
+    let v = parseFloat(num.value);
+    if (!isFinite(v)) { num.value = fmtD(range.value, d); return; }
+    v = Math.max(+range.min, v); if (!opts.extend) v = Math.min(+range.max, v); else if (v > +range.max) range.max = String(v);
+    range.value = String(v); num.value = fmtD(v, Math.max(d, decOf(v))); onSet(v, true);
+  });
+  num.addEventListener('keydown', e => { if (e.key === 'Enter') num.blur(); });
+  return num;
+}
+function setSlider(id, v) { const r = document.getElementById(id); if (!r) return; if (v > +r.max && NUMS[id] && !NUMS[id].num.max) r.max = String(v); r.value = String(v); const n = NUMS[id]; if (n && document.activeElement !== n.num) n.num.value = fmtD(v, Math.max(n.d, decOf(v))); }
+
+// ---------------- object editor ----------------
+function renderObjects() {
+  const L = $('#objList'); L.innerHTML = '';
+  const counts = {};
+  for (const f of S.fields) {
+    counts[f.type] = (counts[f.type] || 0) + 1;
+    const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-pressed', String(f === selected));
+    b.innerHTML = `<i style="background:var(${FIELD_TYPES[f.type].color})"></i>${FIELD_TYPES[f.type].name} ${counts[f.type]}`;
+    b.addEventListener('click', () => { selected = f; renderObjects(); });
+    L.appendChild(b);
+  }
+  $('#objTag').textContent = S.fields.length ? S.fields.length + ' placed' : '';
+  const E = $('#objEditor');
+  if (!selected) { E.innerHTML = S.fields.length ? '<p class="empty">Select an object on the map to change it.</p>' : '<p class="empty">Use the tools on the map to place inlets, outlets, pushes, spinners and calm zones.</p>'; return; }
+  const f = selected, T = FIELD_TYPES[f.type];
+  const rows = [];
+  const rng = (id, lab, min, max, step, val) => rows.push(`<div class="row"><label for="${id}">${lab}</label><div class="ctl"><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"></div></div>`);
+  const span = Math.max(grid.b.xmax - grid.b.xmin, grid.b.ymax - grid.b.ymin);
+  const maxR = Math.max(256, Math.round(span / 2));
+  const box = isBox(f);
+  if (f.type === 'push' || f.type === 'calm') rows.push(`<div class="row"><label>Shape</label><div class="ctl"><div class="seg" id="fShape"><button type="button" data-v="circle" aria-pressed="${!box}">Circle</button><button type="button" data-v="box" aria-pressed="${box}">Rectangle</button></div></div></div>`);
+  if (box) { rng('fLen', 'Length', 16, Math.max(512, Math.round(span)), 8, f.len); rng('fWid', 'Width', 16, Math.max(256, Math.round(span / 2)), 4, f.wid); }
+  else rng('fR', 'Radius', 8, Math.max(maxR, f.r), 4, f.r);
+  rng('fS', f.type === 'calm' ? 'Calming' : f.type === 'outlet' ? 'Drain share' : 'Strength', 0, 4, 0.05, f.s);
+  if (hasDir(f)) rng('fA', 'Direction', -180, 180, 1, f.a);
+  if (f.type === 'inlet') { rng('fPush', 'Push along arrow', 0, 2, 0.05, f.push); rng('fFoam', 'Foam', 0, 3, 0.05, f.foam); }
+  if (f.type === 'spinner') { rng('fPull', 'Pull to centre', 0, 2, 0.05, f.pull); rows.push(`<div class="row"><label>Spin</label><div class="ctl"><div class="seg" id="fCw"><button type="button" data-v="1" aria-pressed="${f.cw}">Clockwise</button><button type="button" data-v="0" aria-pressed="${!f.cw}">Anticlockwise</button></div></div></div>`); }
+  rng('fSoft', 'Soft edge', 0, 1, 0.05, f.soft);
+  rows.push(`<div class="row"><label>Position</label><div class="ctl"><div class="pair"><input type="number" id="fX" value="${f.x}" step="8" aria-label="X"><input type="number" id="fY" value="${f.y}" step="8" aria-label="Y"></div></div></div>`);
+  const note = f.type === 'outlet' && S.sim.balance ? '<p class="note">With balanced outlets, each outlet drains its share of what the inlets add.</p>' : box && f.type === 'push' ? '<p class="note">Drag the round end handles to stretch and aim it, the square handle to change its width.</p>' : '';
+  E.innerHTML = `<div class="objhead"><span class="sw" style="background:var(${T.color})"></span><strong>${T.name}</strong><span class="note">${T.desc}</span><button class="btn small" id="fDel" type="button">Remove</button></div>${rows.join('')}${note}`;
+  const units = { fR: 'u', fLen: 'u', fWid: 'u', fA: '°' };
+  const bind = (id, key) => {
+    const el = $('#' + id); if (!el) return;
+    let armed = false;
+    linkSlider(el, units[id] || '', (v, done) => { if (!armed) { pushUndo(); armed = true; } f[key] = v; if (done) { armed = false; buildFields(); } else buildFieldsSoon(); }, { extend: ['fR', 'fLen', 'fWid', 'fS', 'fPush', 'fFoam', 'fPull'].includes(id) });
+  };
+  bind('fR', 'r'); bind('fLen', 'len'); bind('fWid', 'wid'); bind('fS', 's'); bind('fA', 'a'); bind('fPush', 'push'); bind('fFoam', 'foam'); bind('fPull', 'pull'); bind('fSoft', 'soft');
+  for (const id of ['fX', 'fY']) $('#' + id).addEventListener('change', e => { pushUndo(); f[id === 'fX' ? 'x' : 'y'] = +e.target.value; buildFields(); });
+  const cwEl = $('#fCw'); if (cwEl) cwEl.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { pushUndo(); f.cw = b.dataset.v === '1'; buildFields(); renderObjects(); }));
+  const shEl = $('#fShape'); if (shEl) shEl.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    if ((b.dataset.v === 'box') === isBox(f)) return; pushUndo();
+    if (b.dataset.v === 'box') { f.shape = 'box'; f.len = Math.round(f.r * 2); f.wid = Math.round(f.r); } else { f.shape = 'circle'; f.r = Math.round(Math.max(f.len || 0, f.wid || 0) / 2) || f.r; }
+    buildFields(); renderObjects();
+  }));
+  $('#fDel').addEventListener('click', () => { pushUndo(); S.fields = S.fields.filter(x => x !== f); selected = null; buildFields(); renderObjects(); updateHint(); });
+}
+function renderObjEditorValues() {
+  if (!selected) return; const f = selected;
+  setSlider('fR', f.r); setSlider('fA', f.a); setSlider('fLen', f.len); setSlider('fWid', f.wid);
+  const x = $('#fX'), y = $('#fY'); if (x) x.value = f.x; if (y) y.value = f.y;
+}
+
+// ---------------- map panel ----------------
+function waterMatList() {
+  if (!geo) return [];
+  return Object.values(geo.upMats).sort((a, b) => (score(b) - score(a)) || (b.area - a.area));
+  function score(m) { return (m.waterish ? 2 : 0) + (m.brushLike > 0 ? 1 : 0) - (/^tools\//.test(m.mat) ? 4 : 0); }
+}
+function syncMapUI() {
+  $('#mapTag').textContent = S.mapName;
+  const src = $('#srcNote');
+  if (S.sourceKind === 'demo') src.innerHTML = '<b>Demo river.</b> Open a <span class="mono">.vmf</span> from Hammer to work on your own map. An <span class="mono">.obj</span> export also works.';
+  else if (geo && geo.kind === 'vmf') src.innerHTML = `<b>${escapeHtml(S.fileName)}</b> · ${geo.brushes.length.toLocaleString()} brushes, ${geo.disps.length.toLocaleString()} displacements, ${geo.props.length.toLocaleString()} props`;
+  else if (geo && geo.kind === 'obj') src.innerHTML = `<b>${escapeHtml(S.fileName)}</b> · ${(geo.tris.length / 9).toLocaleString()} triangles`;
+  else src.innerHTML = `<b>${escapeHtml(S.fileName || S.mapName)}</b> · from a saved scene. Open the .vmf again to change the collision.`;
+  // water materials
+  const sel = $('#selWaterMat'); sel.innerHTML = '';
+  const list = waterMatList();
+  const none = document.createElement('option'); none.value = ''; none.textContent = list.length ? '(none — set height by hand)' : '(no surfaces found)'; sel.appendChild(none);
+  for (const m of list.slice(0, 80)) { const o = document.createElement('option'); o.value = m.mat; o.textContent = m.mat + (m.waterish ? '' : '  ·') ; sel.appendChild(o); }
+  sel.value = S.waterMat || ''; sel.disabled = !geo || geo.kind === 'scene';
+  if (geo && geo.kind === 'scene' && S.waterMat) { sel.innerHTML = ''; const o = document.createElement('option'); o.textContent = S.waterMat; sel.appendChild(o); }
+  const lv = $('#selLevel'); lv.innerHTML = '';
+  if (geo && S.waterMat && geo.upMats[S.waterMat]) {
+    for (const L of Geom.waterLevels(geo.upMats[S.waterMat])) { const o = document.createElement('option'); o.value = L.z; o.textContent = `Z ${fmt(L.z)} · ${L.faces.length} face${L.faces.length > 1 ? 's' : ''}`; lv.appendChild(o); }
+    lv.value = S.waterLevelZ != null ? String(S.waterLevelZ) : ''; lv.disabled = false;
+  } else { const o = document.createElement('option'); o.textContent = '–'; lv.appendChild(o); lv.disabled = true; }
+  $('#inWaterZ').value = fmt(S.waterZ); $('#inBandLo').value = S.bandLo; $('#inBandHi').value = S.bandHi;
+  const b = grid ? grid.b : rawWaterBounds();
+  $('#inX0').value = fmt(b.xmin); $('#inX1').value = fmt(b.xmax); $('#inY0').value = fmt(b.ymin); $('#inY1').value = fmt(b.ymax);
+  $('#chkSnap').checked = S.snap; $('#selRes').value = String(S.res);
+  for (const bt of $('#segEdges').querySelectorAll('button')) bt.setAttribute('aria-pressed', String(bt.dataset.v === S.edges));
+  $('#chkOutside').checked = S.outsideSolid; $('#chkOutside').disabled = !(base && base.hasWaterArea);
+  $('#chkNoFloor').checked = S.noFloorSolid;
+  $('#chkNoFloor').parentElement.title = noFloorAuto ? 'Turned off automatically: most of the water has no floor in this geometry.' : '';
+  // classes
+  const cw = $('#classesWrap'), cl = $('#classes');
+  if (geo && geo.kind === 'vmf') {
+    cw.hidden = false; cl.innerHTML = '';
+    const cls = S.classes || Geom.defaultClasses(geo);
+    const entries = Object.entries(geo.brushClassCount).sort((a, b) => (a[0] === 'worldspawn' ? -1 : b[0] === 'worldspawn' ? 1 : b[1] - a[1]));
+    for (const [c, n] of entries) {
+      const id = 'cls-' + c.replace(/\W/g, '_');
+      const lab = document.createElement('label'); lab.className = 'check';
+      lab.innerHTML = `<input type="checkbox" id="${id}" ${cls.has(c) ? 'checked' : ''}><span>${escapeHtml(c)}</span><span class="cnt">${n}</span>`;
+      lab.querySelector('input').addEventListener('change', e => { const s = new Set(S.classes || Geom.defaultClasses(geo)); e.target.checked ? s.add(c) : s.delete(c); S.classes = s; rebuildSoon(); });
+      cl.appendChild(lab);
+    }
+  } else cw.hidden = true;
+  const hasProps = geo && geo.props && geo.props.length;
+  $('#propRow').hidden = !hasProps; $('#propNote').hidden = !hasProps;
+  setSlider('rngPropR', S.propRadius);
+  syncPropNote();
+  $('#stGrid').textContent = grid ? `${grid.W}×${grid.H} · ${fmt(Math.round(grid.cx * 10) / 10)} u/cell` : '';
+  $('#btnFitWater').disabled = !geo || geo.kind === 'scene';
+}
+function syncPropNote() {
+  if (!geo || !geo.props) return;
+  const n = Object.keys(S.propBlocks).length;
+  $('#propNote').innerHTML = `Props aren't part of the .vmf geometry. Use the prop tool (<span class="kbd">R</span>) to mark the ones that stand in the water${n ? `: <b>${n}</b> marked` : ''}, or paint blockers over them.`;
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+$('#selWaterMat').addEventListener('change', e => {
+  S.waterMat = e.target.value || null;
+  if (S.waterMat && geo.upMats[S.waterMat]) { const L = Geom.waterLevels(geo.upMats[S.waterMat])[0]; S.waterLevelZ = L.z; S.waterZ = L.z; } else S.waterLevelZ = null;
+  S.bounds = null; rebuildSoon();
+});
+$('#selLevel').addEventListener('change', e => { S.waterLevelZ = +e.target.value; S.waterZ = S.waterLevelZ; S.bounds = null; rebuildSoon(); });
+$('#inWaterZ').addEventListener('change', e => { S.waterZ = +e.target.value || 0; rebuildSoon(); });
+$('#inBandLo').addEventListener('change', e => { S.bandLo = +e.target.value; rebuildSoon(); });
+$('#inBandHi').addEventListener('change', e => { S.bandHi = Math.max(S.bandLo + 1, +e.target.value); rebuildSoon(); });
+for (const id of ['inX0', 'inX1', 'inY0', 'inY1']) $('#' + id).addEventListener('change', () => {
+  const v = { xmin: +$('#inX0').value, xmax: +$('#inX1').value, ymin: +$('#inY0').value, ymax: +$('#inY1').value };
+  if (v.xmax - v.xmin < 16 || v.ymax - v.ymin < 16) { toast('The area must be at least 16 units across.'); syncMapUI(); return; }
+  S.bounds = v; rebuildSoon();
+});
+$('#btnFitWater').addEventListener('click', () => { S.bounds = null; rebuildSoon(); });
+$('#btnDrawArea').addEventListener('click', () => setTool('area'));
+$('#chkSnap').addEventListener('change', e => { S.snap = e.target.checked; rebuildSoon(); });
+$('#selRes').addEventListener('change', e => { S.res = +e.target.value; rebuildSoon(); });
+$('#segEdges').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.edges = b.dataset.v; syncMapUI(); if (sim) { stats.change = 1; } });
+$('#chkOutside').addEventListener('change', e => { S.outsideSolid = e.target.checked; compose(); buildFields(); });
+$('#chkNoFloor').addEventListener('change', e => { S.noFloorSolid = e.target.checked; compose(); buildFields(); syncMapUI(); });
+linkSlider($('#rngPropR'), 'u', (v, done) => { S.propRadius = v; if (done) { compose(); buildFields(); } else composeSoon(); }, { extend: true });
+
+// ---------------- simulation panel ----------------
+const SIMCTL = [
+  ['rngFlow', 'flow', '×', 'fields'], ['rngDamp', 'damp', ''], ['rngShallow', 'shallow', ''], ['rngShallowD', 'shallowDepth', 'u', 'compose'],
+  ['rngSwirl', 'swirl', ''], ['rngAvg', 'avgSteps', 'steps'], ['rngSpeed', 'spf', 'max'], ['rngIters', 'cycles', ''],
+  ['rngFoamImp', 'foamImpact', ''], ['rngFoamSpd', 'foamSpeed', ''], ['rngFoamTurb', 'foamTurb', ''], ['rngFoamDecay', 'foamFade', 'steps'],
+];
+function syncSimUI() {
+  for (const [id, key] of SIMCTL) setSlider(id, S.sim[key]);
+  $('#chkBalance').checked = S.sim.balance;
+}
+for (const [id, key, unit, extra] of SIMCTL) {
+  linkSlider($('#' + id), unit, (v, done) => { S.sim[key] = v; if (extra === 'fields') done ? buildFields() : buildFieldsSoon(); if (extra === 'compose') done ? (compose(), buildFields()) : composeSoon(); });
+}
+$('#chkBalance').addEventListener('change', e => { S.sim.balance = e.target.checked; buildFields(); if (selected) renderObjects(); });
+function toggleRun() { running = !running; $('#btnRun').textContent = running ? 'Pause' : 'Run'; $('#btnRun').classList.toggle('primary', running); }
+$('#btnRun').addEventListener('click', toggleRun);
+$('#btnReset').addEventListener('click', () => { if (sim) { sim.reset(); stats.lastAvg = null; stats.change = 1; } });
+
+// ---------------- export panel ----------------
+const EXPCTL = [['rngGain', 'gain', '×'], ['rngEven', 'even', '%'], ['rngBlur', 'blur', 'px'], ['rngFoamGain', 'foamGain', '×'], ['rngShore', 'shore', '']];
+for (const [id, key, unit] of EXPCTL) linkSlider($('#' + id), unit, v => { S.exp[key] = v; });
+function syncExpUI() {
+  for (const [id, key] of EXPCTL) setSlider(id, S.exp[key]);
+  $('#selSize').value = String(S.exp.size);
+  $('#chkFlipGreen').checked = S.exp.flipGreen;
+  for (const b of $('#segFmt').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.v === S.exp.fmt));
+  $('#chkFlipRed').checked = S.exp.flipRed; $('#chkFoam').checked = S.exp.foam; $('#chkClamp').checked = S.exp.clamp;
+  $('#inMatPath').value = matPath(); $('#inMapW').value = S.mapW; $('#inMapH').value = S.mapH;
+  $('#chkPatch').checked = S.exp.patch; $('#inPatchMat').value = S.exp.patchMat;
+  updateExportInfo();
+}
+$('#selSize').addEventListener('change', e => { S.exp.size = +e.target.value; updateExportInfo(); });
+$('#chkFlipGreen').addEventListener('change', e => { S.exp.flipGreen = e.target.checked; syncViews(); });
+$('#segFmt').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.exp.fmt = b.dataset.v; syncExpUI(); });
+$('#chkFlipRed').addEventListener('change', e => { S.exp.flipRed = e.target.checked; syncViews(); });
+$('#chkFoam').addEventListener('change', e => S.exp.foam = e.target.checked);
+$('#chkClamp').addEventListener('change', e => { S.exp.clamp = e.target.checked; updateExportInfo(); });
+$('#inMatPath').addEventListener('change', e => { S.exp.matPath = e.target.value.trim().replace(/\\/g, '/').replace(/^materials\//i, '').replace(/\.vtf$/i, ''); syncExpUI(); });
+$('#inMapW').addEventListener('change', e => { S.mapW = Math.max(1, Math.round(+e.target.value || 512)); rebuildSoon(); });
+$('#inMapH').addEventListener('change', e => { S.mapH = Math.max(1, Math.round(+e.target.value || 512)); rebuildSoon(); });
+$('#chkPatch').addEventListener('change', e => S.exp.patch = e.target.checked);
+$('#inPatchMat').addEventListener('change', e => { S.exp.patchMat = e.target.value.trim(); updateExportInfo(); });
+$('#btnCopyVmt').addEventListener('click', () => copyText($('#vmtOut').value, 'VMT lines'));
+$('#btnCopyHammer').addEventListener('click', () => copyText(hammerText(), 'Hammer values'));
+
+function expo() { return 1 - 0.6 * clamp(S.exp.even / 100, 0, 1); }
+function matPath() { return S.exp.matPath || ('flowmaps/' + safeName(S.mapName) + '_flow'); }
+function exportDims() {
+  const ex = grid.b.xmax - grid.b.xmin, ey = grid.b.ymax - grid.b.ymin; const L = S.exp.size;
+  const pot = v => Math.pow(2, Math.round(Math.log2(Math.max(16, v))));
+  return ex >= ey ? [L, Math.min(L, pot(L * ey / ex))] : [Math.min(L, pot(L * ex / ey)), L];
+}
+function align() { return Exp.alignment(grid.b, S.mapW, S.mapH); }
+function updateExportInfo() {
+  if (!grid) return;
+  const [ew, eh] = exportDims(); $('#sizeOut').textContent = `${ew} × ${eh}`;
+  const a = align();
+  $('#hammerBox').innerHTML = `<div class="lbl" style="color:var(--fg);font-weight:600">Hammer: water surface faces</div>
+    <div class="grid"><span></span><span class="h">X</span><span class="h">Y</span>
+    <span>Texture scale</span><span class="v">${fmt(a.scaleX)}</span><span class="v">${fmt(a.scaleY)}</span>
+    <span>Texture shift</span><span class="v">${fmt(a.shiftX)}</span><span class="v">${fmt(a.shiftY)}</span>
+    <span>Rotation</span><span class="v">0</span><span></span></div>
+    <p class="note">Select every top face of the water, set <b>World</b> alignment, and type these into the Face Edit Sheet. Assumes a ${S.mapW} × ${S.mapH} water texture.${S.exp.clamp ? ' With clamping on, use these exact shifts.' : ''}</p>`;
+  $('#vmtOut').value = vmtSnippet();
+  const canPatch = geo && geo.kind === 'vmf' && S.waterMat;
+  $('#patchRow').hidden = !canPatch; $('#patchMatRow').hidden = !canPatch;
+  $('#expTag').textContent = `${ew}×${eh}`;
+}
+function vmtSnippet() {
+  return [
+    `"$flowmap"                    "${matPath()}"`,
+    `"$flow_worlduvscale"          "1"`,
+    `"$flow_normaluvscale"         "160"`,
+    `"$flow_timeintervalinseconds" "0.6"`,
+    `"$flow_uvscrolldistance"      "0.1"`,
+    `"$flow_bumpstrength"          "1.0"`,
+    `"$flow_noise_texture"         "liquids/water_noise"`,
+    `"$flow_noise_scale"           "0.001"`,
+    `"$flow_debug"                 "0"`,
+  ].join('\n');
+}
+function hammerText() {
+  const a = align(), b = grid.b; const [ew, eh] = exportDims();
+  return [
+    `DinoTown Flowmapper v${APP_VERSION}: ${S.mapName}`,
+    ``,
+    `Water surface faces (select every top face of the water, World alignment):`,
+    `  Texture scale X ${fmt(a.scaleX)}   Y ${fmt(a.scaleY)}`,
+    `  Texture shift X ${fmt(a.shiftX)}   Y ${fmt(a.shiftY)}`,
+    `  Rotation 0 (texture axes [1 0 0] and [0 -1 0], the default for floors)`,
+    `  These assume the water material's base texture is ${S.mapW} x ${S.mapH} pixels in game.`,
+    ``,
+    `Flowmap area: X ${fmt(b.xmin)} to ${fmt(b.xmax)}, Y ${fmt(b.ymin)} to ${fmt(b.ymax)}`,
+    `Water height: Z ${fmt(S.waterZ)}${S.waterMat ? '  (material ' + S.waterMat + ')' : ''}`,
+    `Flowmap: ${ew} x ${eh}, ${S.exp.fmt}, foam ${S.exp.foam ? 'in alpha' : 'off'}`,
+    `Direction: ${S.exp.flipRed || S.exp.flipGreen ? 'custom (' + [S.exp.flipRed ? 'red flipped' : '', S.exp.flipGreen ? 'green flipped' : ''].filter(Boolean).join(', ') + ')' : 'Valve water shader convention'}. Valve's shader scrolls the normal map against the stored vector, so the texture holds the upstream direction (red = -X, green = +Y for water that flows east and south).`,
+    `File: materials/${matPath()}.vtf`,
+    ``,
+    `Add to the water material (.vmt):`,
+    vmtSnippet(),
+    ``,
+    `Check alignment with "$flow_debug" "1": the flowmap colours show on the water in Hammer and in game.`,
+    `If water runs the wrong way in game, export again with "Flip red" and/or "Flip green".`,
+  ].join('\n');
+}
+
+// ---------------- export building ----------------
+function blurMasked(vx, vy, W, H, mask, passes) {
+  let a = vx, b = vy;
+  for (let p = 0; p < passes; p++) {
+    for (const horiz of [true, false]) {
+      const na = new Float32Array(W * H), nb = new Float32Array(W * H);
+      for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+        const k = j * W + i; if (mask[k]) continue;
+        let sa = 0, sb = 0, n = 0;
+        for (let d = -1; d <= 1; d++) {
+          const ii = horiz ? i + d : i, jj = horiz ? j : j + d; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue;
+          const q = jj * W + ii; if (mask[q]) continue; const w = d === 0 ? 2 : 1; sa += a[q] * w; sb += b[q] * w; n += w;
+        }
+        na[k] = sa / n; nb[k] = sb / n;
+      }
+      a = na; b = nb;
+    }
+  }
+  return [a, b];
+}
+function sampleBil(arr, W, H, gx, gy) {
+  const x = clamp(gx - .5, 0, W - 1), y = clamp(gy - .5, 0, H - 1);
+  const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, i1 = Math.min(W - 1, i + 1), j1 = Math.min(H - 1, j + 1);
+  return (arr[j * W + i] * (1 - fx) + arr[j * W + i1] * fx) * (1 - fy) + (arr[j1 * W + i] * (1 - fx) + arr[j1 * W + i1] * fx) * fy;
+}
+function buildMaps() {
+  refreshStats();
+  const a = sim.read('avg'); const W = grid.W, H = grid.H, N = W * H;
+  let vx = new Float32Array(N), vy = new Float32Array(N), fo = new Float32Array(N), pr = new Float32Array(N), dp = new Float32Array(N);
+  let pmin = Infinity, pmax = -Infinity, dmax = 1;
+  for (let k = 0; k < N; k++) {
+    if (solidMask[k]) continue; vx[k] = a[k * 4]; vy[k] = a[k * 4 + 1]; fo[k] = a[k * 4 + 2]; pr[k] = a[k * 4 + 3];
+    pmin = Math.min(pmin, pr[k]); pmax = Math.max(pmax, pr[k]);
+    const d = depthArr[k]; dp[k] = isFinite(d) ? Math.max(0, d) : 0; dmax = Math.max(dmax, dp[k]);
+  }
+  if (S.exp.blur) [vx, vy] = blurMasked(vx, vy, W, H, solidMask, S.exp.blur);
+  const [ew, eh] = exportDims(); const M = ew * eh;
+  const flow = new Uint8Array(M * 4), foam = new Uint8Array(M * 4), height = new Uint8Array(M * 4), depth = new Uint8Array(M * 4);
+  const vref = stats.vref; const ex = expo(); const gs = S.exp.flipGreen ? 1 : -1; const rs = S.exp.flipRed ? 1 : -1;
+  const solidF = Float32Array.from(solidMask);
+  for (let y = 0; y < eh; y++) for (let x = 0; x < ew; x++) {
+    const gx = (x + .5) / ew * W, gy = (y + .5) / eh * H; const o = (y * ew + x) * 4;
+    let fx = sampleBil(vx, W, H, gx, gy) / vref * S.exp.gain, fy = sampleBil(vy, W, H, gx, gy) / vref * S.exp.gain;
+    const l = Math.hypot(fx, fy); if (l > 1e-6) { const k = Math.min(1, Math.pow(l, ex)) / l; fx *= k; fy *= k; }
+    const d = sampleBil(dp, W, H, gx, gy), sol = sampleBil(solidF, W, H, gx, gy);
+    let f = sampleBil(fo, W, H, gx, gy) * S.exp.foamGain;
+    if (S.exp.shore > 0) f += S.exp.shore * (1 - smooth(0, S.sim.shallowDepth, d)) * (1 - sol);
+    f = clamp(f, 0, 1);
+    flow[o] = Math.round(127.5 + 127.5 * fx * rs); flow[o + 1] = Math.round(127.5 + 127.5 * fy * gs); flow[o + 2] = 0; flow[o + 3] = S.exp.foam ? Math.round(f * 255) : 255;
+    const fv = Math.round(f * 255); foam[o] = foam[o + 1] = foam[o + 2] = fv; foam[o + 3] = 255;
+    const hv = Math.round(clamp((sampleBil(pr, W, H, gx, gy) - pmin) / Math.max(1e-6, pmax - pmin), 0, 1) * 255); height[o] = height[o + 1] = height[o + 2] = hv; height[o + 3] = 255;
+    const dv = Math.round(clamp(d / dmax, 0, 1) * 255); depth[o] = depth[o + 1] = depth[o + 2] = dv; depth[o + 3] = 255;
+  }
+  return { ew, eh, flow, foam, height, depth };
+}
+function waterSides() {
+  if (!geo || geo.kind !== 'vmf' || !S.waterMat || !geo.upMats[S.waterMat]) return [];
+  const b = grid.b; const out = [];
+  for (const f of geo.upMats[S.waterMat].faces) {
+    if (S.waterLevelZ != null && Math.abs(f.z - S.waterLevelZ) > 0.5) continue;
+    const xs = f.poly.map(p => p[0]), ys = f.poly.map(p => p[1]);
+    if (Math.max(...xs) < b.xmin || Math.min(...xs) > b.xmax || Math.max(...ys) < b.ymin || Math.min(...ys) > b.ymax) continue;
+    out.push(f.side);
+  }
+  return out;
+}
+async function exportPack() {
+  if (!sim || !grid) return;
+  busy(true, 'Building the Source pack…'); await yieldUI();
+  try {
+    const m = buildMaps(); const nm = safeName(S.mapName);
+    const vtf = Exp.vtf(m.ew, m.eh, m.flow, { format: S.exp.fmt, clamp: S.exp.clamp });
+    const files = [
+      { name: `materials/${matPath()}.vtf`, data: vtf },
+      { name: `${nm}_flow.tga`, data: Exp.tga(m.ew, m.eh, m.flow) },
+      { name: `${nm}_flow.png`, data: await Exp.png(m.ew, m.eh, m.flow) },
+      { name: `${nm}_foam.png`, data: await Exp.png(m.ew, m.eh, m.foam, 1) },
+      { name: `${nm}_height.png`, data: await Exp.png(m.ew, m.eh, m.height, 1) },
+      { name: `${nm}_depth.png`, data: await Exp.png(m.ew, m.eh, m.depth, 1) },
+      { name: `${nm}_hammer_and_vmt.txt`, data: new TextEncoder().encode(hammerText().replace(/\n/g, '\r\n')) },
+      { name: `${nm}.flowscene.json`, data: new TextEncoder().encode(JSON.stringify(sceneData())) },
+    ];
+    let patched = 0;
+    if (S.exp.patch && geo && geo.kind === 'vmf') {
+      const sides = waterSides(); patched = sides.length;
+      if (sides.length) files.push({ name: `${safeName(S.fileName)}_flow.vmf`, data: strToBytes(Exp.patchVMF(geo.text, sides, align(), S.exp.patchMat || null)) });
+    }
+    busy(false);
+    await saveFile(`${nm}_flowmap_pack.zip`, Exp.zip(files));
+    if (patched) setTimeout(() => toast(`Pack includes ${safeName(S.fileName)}_flow.vmf with ${patched} water face${patched > 1 ? 's' : ''} aligned.`, 4200), 2800);
+  } catch (e) { busy(false); console.error(e); toast('Export failed: ' + e.message, 5000); }
+}
+async function exportPng() {
+  if (!sim) return; busy(true, 'Encoding PNG…'); await yieldUI();
+  try { const m = buildMaps(); const png = await Exp.png(m.ew, m.eh, m.flow); busy(false); await saveFile(`${safeName(S.mapName)}_flow.png`, png); }
+  catch (e) { busy(false); toast('Export failed: ' + e.message, 5000); }
+}
+$('#btnExport').addEventListener('click', exportPack); $('#btnExport2').addEventListener('click', exportPack); $('#btnPng').addEventListener('click', exportPng);
+
+// ---------------- scene save/load ----------------
+function sceneData() {
+  const q = new Uint8Array(grid.W * grid.H); const fz = base.floorZ;
+  for (let k = 0; k < q.length; k++) q[k] = fz[k] > -Infinity ? clamp(Math.round((S.waterZ - fz[k]) / 2), 0, 254) : 255;
+  return {
+    app: 'dinotown-flowmapper', version: 1, appVersion: APP_VERSION, mapName: S.mapName, fileName: S.fileName, sourceKind: S.sourceKind,
+    waterMat: S.waterMat, waterLevelZ: S.waterLevelZ, waterZ: S.waterZ, bandLo: S.bandLo, bandHi: S.bandHi, bounds: S.bounds, snap: S.snap,
+    mapW: S.mapW, mapH: S.mapH, res: S.res, classes: S.classes ? [...S.classes] : null, edges: S.edges, outsideSolid: S.outsideSolid, noFloorSolid: S.noFloorSolid,
+    propRadius: S.propRadius, propBlocks: S.propBlocks, fields: S.fields, nextId: S.nextId, sim: S.sim, exp: S.exp,
+    grid: { W: grid.W, H: grid.H, x0: grid.x0, y1: grid.y1, cx: grid.cx, cy: grid.cy, b: grid.b },
+    raster: { geomSolid: rle(base.geomSolid), water: rle(base.water), hasWaterArea: base.hasWaterArea, depth2: rle(q) },
+    paint: rle(paint), props: geo && geo.props ? geo.props.filter(p => { const g = w2g(p.x, p.y); return g[0] >= 0 && g[1] >= 0 && g[0] <= grid.W && g[1] <= grid.H; }) : [],
+  };
+}
+function loadScene(d) {
+  if (!d || d.app !== 'dinotown-flowmapper') throw new Error('This file is not a Flowmapper scene.');
+  const keepGeo = geo && geo.kind === 'vmf' && d.fileName && d.fileName === S.fileName;
+  Object.assign(S, { mapName: d.mapName, fileName: d.fileName, sourceKind: d.sourceKind, waterMat: d.waterMat, waterLevelZ: d.waterLevelZ, waterZ: d.waterZ, bandLo: d.bandLo, bandHi: d.bandHi,
+    bounds: d.bounds, snap: d.snap, mapW: d.mapW, mapH: d.mapH, res: d.res, classes: d.classes ? new Set(d.classes) : null, edges: d.edges, outsideSolid: d.outsideSolid, noFloorSolid: d.noFloorSolid,
+    propRadius: d.propRadius, propBlocks: d.propBlocks || {}, fields: d.fields || [], nextId: d.nextId || 1 });
+  const sm = { ...(d.sim || {}) }, ex = { ...(d.exp || {}) };
+  if (!d.appVersion) { // v1 scenes stored a few settings on a different scale
+    if (sm.avg != null) sm.avgSteps = Math.round(20 + sm.avg * sm.avg * 3000);
+    if (sm.foamDecay) sm.foamFade = Math.round(1 / sm.foamDecay);
+    if (ex.even != null && ex.even <= 1) ex.even = Math.round(ex.even * 100);
+    delete sm.avg; delete sm.foamDecay; delete sm.iters;
+  }
+  Object.assign(S.sim, sm); Object.assign(S.exp, ex);
+  const g = d.grid; const N = g.W * g.H;
+  if (!keepGeo) {
+    geo = { kind: 'scene', props: d.props || [], upMats: {}, brushes: [], disps: [], worldBounds: g.b, classCount: {}, brushClassCount: {} };
+    const q = unrle(d.raster.depth2, N); const fz = new Float32Array(N);
+    for (let k = 0; k < N; k++) fz[k] = q[k] === 255 ? -Infinity : S.waterZ - q[k] * 2;
+    base = { geomSolid: unrle(d.raster.geomSolid, N), water: unrle(d.raster.water, N), floorZ: fz, hasWaterArea: d.raster.hasWaterArea };
+  }
+  grid = { ...g }; paint = unrle(d.paint, N);
+  selected = null; undo = []; redo = [];
+  // resample if settings imply a different grid
+  const want = computeGrid();
+  if (want.W !== g.W || want.H !== g.H || Math.abs(want.x0 - g.x0) > 1e-6 || Math.abs(want.y1 - g.y1) > 1e-6) rasterNow();
+  else { if (sim) sim.resize(grid.W, grid.H); compose(); buildFields(); syncMapUI(); fitView(); }
+  syncSimUI(); syncExpUI(); renderObjects(); updateHint();
+}
+$('#btnSaveScene').addEventListener('click', () => saveFile(`${safeName(S.mapName)}.flowscene.json`, new TextEncoder().encode(JSON.stringify(sceneData()))));
+
+// ---------------- file loading ----------------
+$('#btnOpen').addEventListener('click', () => $('#fileMap').click());
+$('#btnOpenScene').addEventListener('click', () => $('#fileScene').click());
+$('#fileMap').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) openFile(f); });
+$('#fileScene').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) openFile(f); });
+const stageEl = $('#stage');
+stageEl.addEventListener('dragover', e => { e.preventDefault(); stageEl.classList.add('drop'); });
+stageEl.addEventListener('dragleave', () => stageEl.classList.remove('drop'));
+stageEl.addEventListener('drop', e => { e.preventDefault(); stageEl.classList.remove('drop'); const f = e.dataTransfer.files[0]; if (f) openFile(f); });
+
+async function openFile(file) {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  busy(true, 'Reading ' + file.name + '…'); await yieldUI();
+  try {
+    const buf = new Uint8Array(await file.arrayBuffer());
+    const text = bytesToStr(buf);
+    if (ext === 'json') { loadScene(JSON.parse(new TextDecoder().decode(buf))); toast('Scene opened'); return; }
+    let g;
+    if (ext === 'vmf') { busy(true, 'Building brushes and displacements…'); await yieldUI(); g = Geom.loadVMF(text); }
+    else if (ext === 'obj') { g = Geom.loadOBJ(text, { up: guessUp(text) }); }
+    else throw new Error('Open a .vmf, .obj or .json scene file.');
+    const sameMap = S.fileName === file.name && S.sourceKind === 'file';
+    geo = g; S.fileName = file.name; S.sourceKind = 'file'; S.mapName = safeName(file.name);
+    if (ext === 'vmf') { for (const m of Object.values(g.upMats)) m.brushLike = m.faces.filter(f => f.brushLike).length; }
+    if (!sameMap) {
+      S.fields = []; S.propBlocks = {}; S.bounds = null; S.classes = null; selected = null; undo = []; redo = []; paint = null; grid = null; S.exp.matPath = '';
+      const list = waterMatList(); const pick = list.find(m => m.waterish && m.brushLike) || list.find(m => m.waterish);
+      if (pick) { S.waterMat = pick.mat; const L = Geom.waterLevels(pick)[0]; S.waterLevelZ = L.z; S.waterZ = L.z; }
+      else { S.waterMat = null; S.waterLevelZ = null; S.waterZ = isFinite(g.worldBounds.zmin) ? Math.round((g.worldBounds.zmin + g.worldBounds.zmax) / 2) : 0; }
+      S.res = Math.max(S.res, 384);
+    }
+    busy(true, 'Rasterising collision…'); await yieldUI();
+    rasterNow(); syncExpUI(); renderObjects();
+    toast(S.waterMat ? `Found water: ${S.waterMat} at Z ${fmt(S.waterZ)}` : 'No water material found. Set the water height and draw the area.', 4200);
+  } catch (e) { console.error(e); toast('Could not open ' + file.name + ': ' + e.message, 6000); }
+  finally { busy(false); }
+}
+function guessUp(text) {
+  // Crafty / Source exports are Z-up; Blender's default OBJ export is Y-up (has "# Blender" header)
+  return /^# Blender/m.test(text.slice(0, 400)) ? 'y' : 'z';
+}
+
+// ---------------- demo ----------------
+function demoGeo() {
+  const X0 = -2560, X1 = 2560, Y0 = -1280, Y1 = 1280, NX = 160, NY = 80;
+  const yc = x => 330 * Math.sin(x / 640) + 120 * Math.sin(x / 260 + 1.3);
+  const wid = x => 300 + 90 * Math.sin(x / 450 + 0.4);
+  const h = (x, y) => {
+    const d = Math.abs(y - yc(x)) / wid(x);
+    let z = -110 + 175 * smooth(0.45, 1.05, d) + 14 * Math.sin(x / 90) * Math.sin(y / 120);
+    // bay on the south bank
+    const bx = 620, by = yc(620) - 360; const bd = Math.hypot(x - bx, y - by) / 260; if (bd < 1.2) z = Math.min(z, -60 + 140 * smooth(0.6, 1.2, bd));
+    // rock island
+    const rd = Math.hypot(x + 520, y - yc(-520) - 40) / 120; z = Math.max(z, 40 - 160 * smooth(0.5, 1.1, rd));
+    return z;
+  };
+  const tris = [];
+  const P = (i, j) => { const x = X0 + (X1 - X0) * i / NX, y = Y0 + (Y1 - Y0) * j / NY; return [x, y, h(x, y)]; };
+  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) { const a = P(i, j), b = P(i + 1, j), c = P(i + 1, j + 1), d = P(i, j + 1); tris.push(...a, ...b, ...c, ...a, ...c, ...d); }
+  // pier: box from the north bank
+  const px = 1500, py = yc(1500) + wid(1500) * 0.9;
+  const box = (x0, x1, y0, y1, z0, z1) => { const v = [[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]]; const F = [[4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]; for (const f of F) { tris.push(...v[f[0]], ...v[f[1]], ...v[f[2]], ...v[f[0]], ...v[f[2]], ...v[f[3]]); } };
+  box(px - 60, px + 60, py - 330, py, -120, 24);
+  const T = new Float64Array(tris); const triMat = new Array(T.length / 9).fill(0);
+  const water = { mat: 'demo/river_water', waterish: true, area: (X1 - X0) * (Y1 - Y0), brushLike: 1, faces: [{ z: 0, poly: [[X0, Y0], [X1, Y0], [X1, Y1], [X0, Y1]], area: (X1 - X0) * (Y1 - Y0) }] };
+  return { kind: 'obj', tris: T, triMat, mats: [''], upMats: { 'demo/river_water': water }, props: [], brushes: [], disps: [], worldBounds: { xmin: X0, xmax: X1, ymin: Y0, ymax: Y1, zmin: -120, zmax: 80 }, classCount: {}, brushClassCount: {}, demo: { yc } };
+}
+function loadDemo() {
+  geo = demoGeo(); const yc = geo.demo.yc;
+  Object.assign(S, { mapName: 'demo_river', sourceName: 'Built-in demo river', sourceKind: 'demo', fileName: '', waterMat: 'demo/river_water', waterLevelZ: 0, waterZ: 0, bounds: null, res: 384 });
+  S.fields = [];
+  const add = (type, x, y, o) => { const f = newFieldRaw(type, x, y); Object.assign(f, o); S.fields.push(f); };
+  add('inlet', -2440, yc(-2440), { r: 240, s: 1, a: 0, push: 0.8, foam: 0.6 });
+  add('outlet', 2440, yc(2440), { r: 240, s: 1 });
+  add('spinner', 620, yc(620) - 380, { r: 300, s: 0.9, cw: true, pull: 0 });
+  add('push', -1180, yc(-1180), { r: 260, s: 0.8, a: -20 });
+  add('calm', 1860, yc(1860) - 240, { r: 200, s: 0.7 });
+}
+function newFieldRaw(type, x, y) { return { id: S.nextId++, type, x: Math.round(x), y: Math.round(y), r: 160, s: 1, a: 0, soft: 0.5, push: 0.6, foam: 0.5, pull: 0, cw: true }; }
+
+// ---------------- boot ----------------
+function boot() {
+  $('#appVer').textContent = 'v' + APP_VERSION;
+  linkSlider($('#rngBrush'), 'u', v => { brushR = v; }, { extend: true });
+  buildToolbar(); buildViews(); setTool('select'); setBrush(brushR); readColors();
+  $('#chkArrows').checked = S.view.arrows;
+  for (const sec of document.querySelectorAll('.sec > h2')) sec.addEventListener('click', () => sec.parentElement.classList.toggle('closed'));
+  resizeCanvas();
+  gl = glc.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false, preserveDrawingBuffer: true });
+  if (!gl) { $('#hint').hidden = false; $('#hint').innerHTML = '<span class="err">This browser has no WebGL 2, so the simulation cannot run. Try a current Chrome, Edge or Firefox.</span>'; return; }
+  try { sim = new Sim.FluidSim(gl); } catch (e) { console.error(e); $('#hint').hidden = false; $('#hint').innerHTML = '<span class="err">The GPU simulation could not start: ' + escapeHtml(e.message.split('\n')[0]) + '</span>'; return; }
+  loadDemo();
+  rasterNow(); syncSimUI(); syncExpUI(); syncViews(); renderObjects();
+  new ResizeObserver(() => { const keep = { ...view }; const ow = cw, oh = ch; resizeCanvas(); if (!ow) fitView(); else { view.ox = keep.ox + (cw - ow) / 2; view.oy = keep.oy + (ch - oh) / 2; } }).observe($('#canvases'));
+  const mq = window.matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener && mq.addEventListener('change', () => setTimeout(readColors, 30));
+  new MutationObserver(() => setTimeout(readColors, 30)).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
+  requestAnimationFrame(loop);
+  window.__fm = { S, w2s, simParams, buildFields, get grid() { return grid; }, get sim() { return sim; }, get stats() { return stats; }, openFile, exportPack, buildMaps, sceneData, loadScene, setTool, rasterNow, hammerText, get base() { return base; }, get geo() { return geo; } };
+}
+boot();
+})();
+
+</script>
+
+</body>
+</html>
