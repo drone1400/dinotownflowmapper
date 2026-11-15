@@ -1,7 +1,9 @@
 # DinoTown Flowmapper
 
-Open `DinoTown_Flowmapper.html` in Chrome, Edge or Firefox. It runs offline, nothing to install.
-Or use the [web-hosted version](https://claude.ai/artifact/RR5HYoB6kA8FT5PMNd6qi1) without downloading anything.
+Open `index.html` in Chrome, Edge or Firefox. It runs offline, nothing to install.
+Or use it in the browser without downloading anything: on
+[GitHub Pages](https://drone1400.github.io/dinotownflowmapper/) or as a
+[Claude artifact](https://claude.ai/artifact/RR5HYoB6kA8FT5PMNd6qi1).
 
 It replaces the Flowmap Generator steps from the [glitchvid guide](https://glitchvid.com/making-flowmaps-for-source/): no Hammer cleanup copy,
 no Crafty, no Blender, no VTFEdit, no image editor.
